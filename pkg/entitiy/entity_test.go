@@ -72,6 +72,37 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestNew_With_Components(t *testing.T) {
+	ent1 := New(Pos{
+		x: 1,
+		y: 1,
+	}, Vel{
+		x: 2,
+		y: 2,
+	})
+
+	gotPos := ent1.Get(PosType).(Pos)
+	gotVel := ent1.Get(VelType).(Vel)
+
+	expectPos := Pos{
+		x: 1,
+		y: 1,
+	}
+
+	expectVel := Vel{
+		x: 2,
+		y: 2,
+	}
+
+	if !reflect.DeepEqual(gotPos, expectPos) {
+		t.Fatalf("fail to Get Pos: got %v, want %v", gotPos, expectPos)
+	}
+
+	if !reflect.DeepEqual(gotVel, expectVel) {
+		t.Fatalf("fail to Get Vel: got %v, want %v", gotVel, expectVel)
+	}
+}
+
 func TestEntity_Get(t *testing.T) {
 	ent1 := New().Add(Pos{
 		x: 1,

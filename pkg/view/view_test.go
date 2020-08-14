@@ -375,7 +375,7 @@ func TestView_String(t *testing.T) {
 
 	s := view.String()
 
-	if len(s)==0 {
+	if len(s) == 0 {
 		t.Fatalf("shoudl get string, got empty")
 	}
 }

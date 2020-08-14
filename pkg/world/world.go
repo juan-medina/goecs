@@ -17,7 +17,7 @@ func (w World) String() string {
 
 	result += fmt.Sprintf("World[view: %v, systems: [", w.View)
 
-	for g,_ := range w.systems {
+	for g := range w.systems {
 		result += fmt.Sprintf("%s:[", g)
 		for _, s := range w.systems[g] {
 			result += fmt.Sprintf("%s,", reflect.TypeOf(s).String())

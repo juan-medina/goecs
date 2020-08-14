@@ -44,10 +44,16 @@ func (e *Entity) String() string {
 	return "Entity{" + result + "}"
 }
 
-func New() *Entity {
-	return &Entity{
+func New(components ...interface{}) *Entity {
+	ent := Entity{
 		components: make(map[reflect.Type]interface{}),
 	}
+
+	for _, v := range components {
+		ent.Add(v)
+	}
+
+	return &ent
 }
 
 func (e *Entity) Add(i interface{}) *Entity {

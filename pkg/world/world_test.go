@@ -234,7 +234,7 @@ func TestWorld_String(t *testing.T) {
 
 	s := world.String()
 
-	if len(s)==0 {
+	if len(s) == 0 {
 		t.Fatalf("shoudl get string, got empty")
 	}
 }
