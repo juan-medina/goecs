@@ -31,10 +31,10 @@ type Entity struct {
 	components map[reflect.Type]interface{}
 }
 
-func (e *Entity) String() string {
+func (ent *Entity) String() string {
 	var result = ""
 
-	for _, v := range e.components {
+	for _, v := range ent.components {
 		if result != "" {
 			result += ","
 		}
@@ -56,24 +56,24 @@ func New(components ...interface{}) *Entity {
 	return &ent
 }
 
-func (e *Entity) Add(i interface{}) *Entity {
-	e.components[reflect.TypeOf(i)] = i
-	return e
+func (ent *Entity) Add(component interface{}) *Entity {
+	ent.components[reflect.TypeOf(component)] = component
+	return ent
 }
 
-func (e *Entity) Set(i interface{}) *Entity {
-	return e.Add(i)
+func (ent *Entity) Set(component interface{}) *Entity {
+	return ent.Add(component)
 }
 
-func (e Entity) Get(t reflect.Type) interface{} {
-	return e.components[t]
+func (ent Entity) Get(rtype reflect.Type) interface{} {
+	return ent.components[rtype]
 }
 
-func (e Entity) Contains(ts ...reflect.Type) bool {
+func (ent Entity) Contains(rtypes ...reflect.Type) bool {
 	var contains = true
 
-	for _, t := range ts {
-		if _, ok := e.components[t]; !ok {
+	for _, t := range rtypes {
+		if _, ok := ent.components[t]; !ok {
 			contains = false
 			break
 		}

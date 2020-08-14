@@ -32,41 +32,41 @@ type View struct {
 	entities []*entitiy.Entity
 }
 
-func (v View) String() string {
-	return fmt.Sprintf("View{entities: %v}", v.entities)
+func (vw View) String() string {
+	return fmt.Sprintf("View{entities: %v}", vw.entities)
 }
 
-func (v *View) Add(e *entitiy.Entity) *entitiy.Entity {
-	v.entities = append(v.entities, e)
-	return e
+func (vw *View) Add(ent *entitiy.Entity) *entitiy.Entity {
+	vw.entities = append(vw.entities, ent)
+	return ent
 }
 
-func (v *View) Remove(e *entitiy.Entity) {
+func (vw *View) Remove(ent *entitiy.Entity) {
 	i := 0
-	for _, x := range v.entities {
-		if x != e {
-			v.entities[i] = x
+	for _, v := range vw.entities {
+		if v != ent {
+			vw.entities[i] = v
 			i++
 		}
 	}
 
 	// Prevent memory leak by erasing truncated values
-	for j := i; j < len(v.entities); j++ {
-		v.entities[j] = nil
+	for j := i; j < len(vw.entities); j++ {
+		vw.entities[j] = nil
 	}
 
-	v.entities = v.entities[:i]
+	vw.entities = vw.entities[:i]
 }
 
-func (v View) Size() int {
-	return len(v.entities)
+func (vw View) Size() int {
+	return len(vw.entities)
 }
 
-func (v View) Entities(ts ...reflect.Type) []*entitiy.Entity {
+func (vw View) Entities(rtypes ...reflect.Type) []*entitiy.Entity {
 	result := make([]*entitiy.Entity, 0)
 
-	for _, v := range v.entities {
-		if v.Contains(ts...) {
+	for _, v := range vw.entities {
+		if v.Contains(rtypes...) {
 			result = append(result, v)
 		}
 	}
@@ -74,8 +74,8 @@ func (v View) Entities(ts ...reflect.Type) []*entitiy.Entity {
 	return result
 }
 
-func (v View) Entity(ts ...reflect.Type) *entitiy.Entity {
-	entities := v.Entities(ts...)
+func (vw View) Entity(rtypes ...reflect.Type) *entitiy.Entity {
+	entities := vw.Entities(rtypes...)
 	if len(entities) == 0 {
 		return nil
 	} else {
@@ -83,8 +83,8 @@ func (v View) Entity(ts ...reflect.Type) *entitiy.Entity {
 	}
 }
 
-func (v View) SubView(ts ...reflect.Type) *View {
-	return fromEntities(v.Entities(ts...))
+func (vw View) SubView(rtypes ...reflect.Type) *View {
+	return fromEntities(vw.Entities(rtypes...))
 }
 
 func New() *View {

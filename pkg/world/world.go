@@ -12,14 +12,14 @@ type World struct {
 	systems map[string][]system.System
 }
 
-func (w World) String() string {
+func (wld World) String() string {
 	result := ""
 
-	result += fmt.Sprintf("World[view: %v, systems: [", w.View)
+	result += fmt.Sprintf("World[view: %v, systems: [", wld.View)
 
-	for g := range w.systems {
+	for g := range wld.systems {
 		result += fmt.Sprintf("%s:[", g)
-		for _, s := range w.systems[g] {
+		for _, s := range wld.systems[g] {
 			result += fmt.Sprintf("%s,", reflect.TypeOf(s).String())
 		}
 		result += "],"
@@ -29,25 +29,25 @@ func (w World) String() string {
 	return result
 }
 
-func (w *World) AddSystemToGroup(s system.System, g string) {
-	if _, ok := w.systems[g]; !ok {
-		w.systems[g] = make([]system.System, 0)
+func (wld *World) AddSystemToGroup(sys system.System, group string) {
+	if _, ok := wld.systems[group]; !ok {
+		wld.systems[group] = make([]system.System, 0)
 	}
-	w.systems[g] = append(w.systems[g], s)
+	wld.systems[group] = append(wld.systems[group], sys)
 }
 
-func (w *World) AddSystem(s system.System) {
-	w.AddSystemToGroup(s, system.DefaultGroup)
+func (wld *World) AddSystem(sys system.System) {
+	wld.AddSystemToGroup(sys, system.DefaultGroup)
 }
 
-func (w *World) UpdateGroup(g string) {
-	for _, s := range w.systems[g] {
-		s.Update(w.View)
+func (wld *World) UpdateGroup(group string) {
+	for _, s := range wld.systems[group] {
+		s.Update(wld.View)
 	}
 }
 
-func (w *World) Update() {
-	w.UpdateGroup(system.DefaultGroup)
+func (wld *World) Update() {
+	wld.UpdateGroup(system.DefaultGroup)
 }
 
 func New() *World {
