@@ -24,15 +24,18 @@ package world
 
 import (
 	"fmt"
-	"github.com/juan-medina/goecs/pkg/system"
 	"github.com/juan-medina/goecs/pkg/view"
 	"reflect"
 )
 
 type World struct {
 	*view.View
-	systems map[string][]system.System
+	systems map[string][]System
 }
+
+const (
+	defaultSystemGroup = "DEFAULT_GROUP"
+)
 
 func (wld World) String() string {
 	result := ""
@@ -51,20 +54,20 @@ func (wld World) String() string {
 	return result
 }
 
-func (wld *World) AddSystemToGroup(sys system.System, group string) {
+func (wld *World) AddSystemToGroup(sys System, group string) {
 	if _, ok := wld.systems[group]; !ok {
-		wld.systems[group] = make([]system.System, 0)
+		wld.systems[group] = make([]System, 0)
 	}
 	wld.systems[group] = append(wld.systems[group], sys)
 }
 
-func (wld *World) AddSystem(sys system.System) {
-	wld.AddSystemToGroup(sys, system.DefaultGroup)
+func (wld *World) AddSystem(sys System) {
+	wld.AddSystemToGroup(sys, defaultSystemGroup)
 }
 
 func (wld *World) UpdateGroup(group string, delta float64) error {
 	for _, s := range wld.systems[group] {
-		if err := s.Update(wld.View, delta); err != nil {
+		if err := s.Update(wld, delta); err != nil {
 			return err
 		}
 	}
@@ -72,12 +75,12 @@ func (wld *World) UpdateGroup(group string, delta float64) error {
 }
 
 func (wld *World) Update(delta float64) error {
-	return wld.UpdateGroup(system.DefaultGroup, delta)
+	return wld.UpdateGroup(defaultSystemGroup, delta)
 }
 
 func (wld *World) NotifyGroup(group string, event interface{}, delta float64) error {
 	for _, s := range wld.systems[group] {
-		if err := s.Notify(wld.View, event, delta); err != nil {
+		if err := s.Notify(wld, event, delta); err != nil {
 			return err
 		}
 	}
@@ -85,12 +88,12 @@ func (wld *World) NotifyGroup(group string, event interface{}, delta float64) er
 }
 
 func (wld *World) Notify(event interface{}, delta float64) error {
-	return wld.NotifyGroup(system.DefaultGroup, event, delta)
+	return wld.NotifyGroup(defaultSystemGroup, event, delta)
 }
 
 func New() *World {
 	return &World{
 		View:    view.New(),
-		systems: make(map[string][]system.System, 0),
+		systems: make(map[string][]System, 0),
 	}
 }

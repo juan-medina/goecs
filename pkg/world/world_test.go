@@ -1,10 +1,30 @@
+/*
+ * Copyright (c) 2020 Juan Medina.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
+
 package world
 
 import (
 	"errors"
 	"github.com/juan-medina/goecs/pkg/entitiy"
-	"github.com/juan-medina/goecs/pkg/system"
-	"github.com/juan-medina/goecs/pkg/view"
 	"reflect"
 	"testing"
 )
@@ -27,10 +47,10 @@ type resetEvent struct{}
 
 type HMovementSystem struct{}
 
-func (m *HMovementSystem) Notify(view *view.View, e interface{}, _ float64) error {
+func (m *HMovementSystem) Notify(world *World, e interface{}, _ float64) error {
 	switch e.(type) {
 	case resetEvent:
-		for _, v := range view.Entities(PosType, VelType) {
+		for _, v := range world.Entities(PosType, VelType) {
 			pos := v.Get(PosType).(Pos)
 			pos.x = 0
 			v.Set(pos)
@@ -39,8 +59,8 @@ func (m *HMovementSystem) Notify(view *view.View, e interface{}, _ float64) erro
 	return nil
 }
 
-func (m *HMovementSystem) Update(view *view.View, _ float64) error {
-	for _, v := range view.Entities(PosType, VelType) {
+func (m *HMovementSystem) Update(world *World, _ float64) error {
+	for _, v := range world.Entities(PosType, VelType) {
 		pos := v.Get(PosType).(Pos)
 		vel := v.Get(VelType).(Vel)
 
@@ -53,10 +73,10 @@ func (m *HMovementSystem) Update(view *view.View, _ float64) error {
 
 type VMovementSystem struct{}
 
-func (m *VMovementSystem) Notify(view *view.View, e interface{}, _ float64) error {
+func (m *VMovementSystem) Notify(world *World, e interface{}, _ float64) error {
 	switch e.(type) {
 	case resetEvent:
-		for _, v := range view.Entities(PosType, VelType) {
+		for _, v := range world.Entities(PosType, VelType) {
 			pos := v.Get(PosType).(Pos)
 			pos.y = 0
 			v.Set(pos)
@@ -64,8 +84,8 @@ func (m *VMovementSystem) Notify(view *view.View, e interface{}, _ float64) erro
 	}
 	return nil
 }
-func (m *VMovementSystem) Update(view *view.View, _ float64) error {
-	for _, v := range view.Entities(PosType, VelType) {
+func (m *VMovementSystem) Update(world *World, _ float64) error {
+	for _, v := range world.Entities(PosType, VelType) {
 		pos := v.Get(PosType).(Pos)
 		vel := v.Get(VelType).(Vel)
 
@@ -80,11 +100,11 @@ var errFailure = errors.New("failure")
 
 type FailureSystem struct{}
 
-func (f *FailureSystem) Notify(_ *view.View, _ interface{}, _ float64) error {
+func (f *FailureSystem) Notify(_ *World, _ interface{}, _ float64) error {
 	return errFailure
 }
 
-func (f FailureSystem) Update(_ *view.View, _ float64) error {
+func (f FailureSystem) Update(_ *World, _ float64) error {
 	return errFailure
 }
 
@@ -187,7 +207,7 @@ func TestWorld_UpdateGroup(t *testing.T) {
 		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
 		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
-		_ = world.UpdateGroup(system.DefaultGroup, 0)
+		_ = world.UpdateGroup(defaultSystemGroup, 0)
 
 		expectPositions(t, world, []Pos{
 			{x: 1, y: 1},
@@ -239,7 +259,7 @@ func TestWorld_UpdateGroup(t *testing.T) {
 		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
 		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
-		_ = world.UpdateGroup(system.DefaultGroup, 0)
+		_ = world.UpdateGroup(defaultSystemGroup, 0)
 
 		expectPositions(t, world, []Pos{
 			{x: 0, y: 0},

@@ -20,17 +20,9 @@
  *  THE SOFTWARE.
  */
 
-package system
-
-import (
-	"github.com/juan-medina/goecs/pkg/view"
-)
-
-const (
-	DefaultGroup = "DEFAULT_GROUP"
-)
+package world
 
 type System interface {
-	Update(view *view.View, delta float64) error
-	Notify(view *view.View, event interface{}, delta float64) error
+	Update(world *World, delta float64) error
+	Notify(world *World, event interface{}, delta float64) error
 }
