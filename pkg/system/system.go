@@ -31,5 +31,5 @@ const (
 )
 
 type System interface {
-	Update(view *view.View)
+	Update(view *view.View, delta float64) error
 }

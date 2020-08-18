@@ -40,14 +40,17 @@ func (wld *World) AddSystem(sys system.System) {
 	wld.AddSystemToGroup(sys, system.DefaultGroup)
 }
 
-func (wld *World) UpdateGroup(group string) {
+func (wld *World) UpdateGroup(group string, delta float64) error {
 	for _, s := range wld.systems[group] {
-		s.Update(wld.View)
+		if err := s.Update(wld.View, delta); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (wld *World) Update() {
-	wld.UpdateGroup(system.DefaultGroup)
+func (wld *World) Update(delta float64) error {
+	return wld.UpdateGroup(system.DefaultGroup, delta)
 }
 
 func New() *World {

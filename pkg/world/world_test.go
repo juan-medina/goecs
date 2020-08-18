@@ -1,6 +1,7 @@
 package world
 
 import (
+	"errors"
 	"github.com/juan-medina/goecs/pkg/entitiy"
 	"github.com/juan-medina/goecs/pkg/system"
 	"github.com/juan-medina/goecs/pkg/view"
@@ -24,7 +25,7 @@ var VelType = reflect.TypeOf(Vel{})
 
 type HMovementSystem struct{}
 
-func (m *HMovementSystem) Update(view *view.View) {
+func (m *HMovementSystem) Update(view *view.View, _ float64) error {
 	for _, v := range view.Entities(PosType, VelType) {
 		pos := v.Get(PosType).(Pos)
 		vel := v.Get(VelType).(Vel)
@@ -33,11 +34,12 @@ func (m *HMovementSystem) Update(view *view.View) {
 
 		v.Set(pos)
 	}
+	return nil
 }
 
 type VMovementSystem struct{}
 
-func (m *VMovementSystem) Update(view *view.View) {
+func (m *VMovementSystem) Update(view *view.View, _ float64) error {
 	for _, v := range view.Entities(PosType, VelType) {
 		pos := v.Get(PosType).(Pos)
 		vel := v.Get(VelType).(Vel)
@@ -46,6 +48,15 @@ func (m *VMovementSystem) Update(view *view.View) {
 
 		v.Set(pos)
 	}
+	return nil
+}
+
+var errFailure = errors.New("failure")
+
+type FailureSystem struct{}
+
+func (f FailureSystem) Update(_ *view.View, _ float64) error {
+	return errFailure
 }
 
 func TestWorld_Update(t *testing.T) {
@@ -57,7 +68,7 @@ func TestWorld_Update(t *testing.T) {
 		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
 		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
-		world.Update()
+		_ = world.Update(0)
 
 		expectPositions(t, world, []Pos{
 			{x: 1, y: 0},
@@ -75,7 +86,7 @@ func TestWorld_Update(t *testing.T) {
 		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
 		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
-		world.Update()
+		_ = world.Update(0)
 
 		expectPositions(t, world, []Pos{
 			{x: 1, y: 1},
@@ -93,7 +104,7 @@ func TestWorld_Update(t *testing.T) {
 		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
 		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
-		world.Update()
+		_ = world.Update(0)
 
 		expectPositions(t, world, []Pos{
 			{x: 0, y: 1},
@@ -110,7 +121,7 @@ func TestWorld_Update(t *testing.T) {
 		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
 		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
-		world.Update()
+		_ = world.Update(0)
 
 		expectPositions(t, world, []Pos{
 			{x: 0, y: 0},
@@ -129,7 +140,7 @@ func TestWorld_UpdateGroup(t *testing.T) {
 		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
 		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
-		world.Update()
+		_ = world.Update(0)
 
 		expectPositions(t, world, []Pos{
 			{x: 1, y: 0},
@@ -147,7 +158,7 @@ func TestWorld_UpdateGroup(t *testing.T) {
 		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
 		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
-		world.UpdateGroup(system.DefaultGroup)
+		_ = world.UpdateGroup(system.DefaultGroup, 0)
 
 		expectPositions(t, world, []Pos{
 			{x: 1, y: 1},
@@ -165,7 +176,7 @@ func TestWorld_UpdateGroup(t *testing.T) {
 		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
 		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
-		world.UpdateGroup("special group")
+		_ = world.UpdateGroup("special group", 0)
 
 		expectPositions(t, world, []Pos{
 			{x: 1, y: 0},
@@ -182,7 +193,7 @@ func TestWorld_UpdateGroup(t *testing.T) {
 		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
 		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
-		world.UpdateGroup("special group")
+		_ = world.UpdateGroup("special group", 0)
 
 		expectPositions(t, world, []Pos{
 			{x: 1, y: 0},
@@ -199,7 +210,7 @@ func TestWorld_UpdateGroup(t *testing.T) {
 		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
 		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
-		world.UpdateGroup(system.DefaultGroup)
+		_ = world.UpdateGroup(system.DefaultGroup, 0)
 
 		expectPositions(t, world, []Pos{
 			{x: 0, y: 0},
@@ -237,4 +248,35 @@ func TestWorld_String(t *testing.T) {
 	if len(s) == 0 {
 		t.Fatalf("shoudl get string, got empty")
 	}
+}
+
+func TestWorld_Update_Error(t *testing.T) {
+	world := New()
+	world.AddSystem(&FailureSystem{})
+	world.AddSystem(&HMovementSystem{})
+	world.AddSystem(&VMovementSystem{})
+
+	world.AddSystemToGroup(&HMovementSystem{}, "special")
+
+	world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+
+	e := world.Update(0)
+
+	if !errors.Is(e, errFailure) {
+		t.Fatalf("shoudl get failure but got %v", e)
+	}
+
+	expectPositions(t, world, []Pos{
+		{x: 0, y: 0},
+	})
+
+	e = world.UpdateGroup("special", 0)
+
+	if e != nil {
+		t.Fatalf("shoudl not get error but got %v", e)
+	}
+
+	expectPositions(t, world, []Pos{
+		{x: 1, y: 0},
+	})
 }
