@@ -23,7 +23,21 @@ type Vel struct {
 
 var VelType = reflect.TypeOf(Vel{})
 
+type resetEvent struct{}
+
 type HMovementSystem struct{}
+
+func (m *HMovementSystem) Notify(view *view.View, e interface{}, _ float64) error {
+	switch e.(type) {
+	case resetEvent:
+		for _, v := range view.Entities(PosType, VelType) {
+			pos := v.Get(PosType).(Pos)
+			pos.x = 0
+			v.Set(pos)
+		}
+	}
+	return nil
+}
 
 func (m *HMovementSystem) Update(view *view.View, _ float64) error {
 	for _, v := range view.Entities(PosType, VelType) {
@@ -39,6 +53,17 @@ func (m *HMovementSystem) Update(view *view.View, _ float64) error {
 
 type VMovementSystem struct{}
 
+func (m *VMovementSystem) Notify(view *view.View, e interface{}, _ float64) error {
+	switch e.(type) {
+	case resetEvent:
+		for _, v := range view.Entities(PosType, VelType) {
+			pos := v.Get(PosType).(Pos)
+			pos.y = 0
+			v.Set(pos)
+		}
+	}
+	return nil
+}
 func (m *VMovementSystem) Update(view *view.View, _ float64) error {
 	for _, v := range view.Entities(PosType, VelType) {
 		pos := v.Get(PosType).(Pos)
@@ -54,6 +79,10 @@ func (m *VMovementSystem) Update(view *view.View, _ float64) error {
 var errFailure = errors.New("failure")
 
 type FailureSystem struct{}
+
+func (f *FailureSystem) Notify(_ *view.View, _ interface{}, _ float64) error {
+	return errFailure
+}
 
 func (f FailureSystem) Update(_ *view.View, _ float64) error {
 	return errFailure
@@ -221,6 +250,7 @@ func TestWorld_UpdateGroup(t *testing.T) {
 }
 
 func expectPositions(t *testing.T, world *World, want []Pos) {
+	t.Helper()
 	entities := world.Entities(PosType)
 	got := make([]Pos, 0)
 	for _, v := range entities {
@@ -278,5 +308,102 @@ func TestWorld_Update_Error(t *testing.T) {
 
 	expectPositions(t, world, []Pos{
 		{x: 1, y: 0},
+	})
+}
+
+func TestWorld_Notify(t *testing.T) {
+	world := New()
+	world.AddSystem(&HMovementSystem{})
+	world.AddSystem(&VMovementSystem{})
+
+	world.AddSystemToGroup(&HMovementSystem{}, "special")
+
+	world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+	world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
+	world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+
+	_ = world.Update(0)
+
+	expectPositions(t, world, []Pos{
+		{x: 1, y: 1},
+		{x: 2, y: 2},
+		{x: 7, y: 7},
+	})
+
+	_ = world.Notify(resetEvent{}, 0)
+
+	expectPositions(t, world, []Pos{
+		{x: 0, y: 0},
+		{x: 2, y: 2},
+		{x: 0, y: 0},
+	})
+
+	_ = world.Update(0)
+
+	expectPositions(t, world, []Pos{
+		{x: 1, y: 1},
+		{x: 2, y: 2},
+		{x: 4, y: 4},
+	})
+
+	_ = world.NotifyGroup("special", resetEvent{}, 0)
+
+	expectPositions(t, world, []Pos{
+		{x: 0, y: 1},
+		{x: 2, y: 2},
+		{x: 0, y: 4},
+	})
+}
+
+func TestWorld_Notify_Error(t *testing.T) {
+	world := New()
+	world.AddSystem(&FailureSystem{})
+	world.AddSystem(&HMovementSystem{})
+	world.AddSystem(&VMovementSystem{})
+
+	world.AddSystemToGroup(&HMovementSystem{}, "special")
+
+	world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+	world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
+	world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+
+	_ = world.UpdateGroup("special", 0)
+
+	expectPositions(t, world, []Pos{
+		{x: 1, y: 0},
+		{x: 2, y: 2},
+		{x: 7, y: 3},
+	})
+
+	e := world.Notify(resetEvent{}, 0)
+
+	if !errors.Is(e, errFailure) {
+		t.Fatalf("shoudl get failure but got %v", e)
+	}
+
+	expectPositions(t, world, []Pos{
+		{x: 1, y: 0},
+		{x: 2, y: 2},
+		{x: 7, y: 3},
+	})
+
+	_ = world.Update(0)
+
+	expectPositions(t, world, []Pos{
+		{x: 1, y: 0},
+		{x: 2, y: 2},
+		{x: 7, y: 3},
+	})
+
+	e = world.NotifyGroup("special", resetEvent{}, 0)
+
+	if e != nil {
+		t.Fatalf("shoudl not get error but got %v", e)
+	}
+
+	expectPositions(t, world, []Pos{
+		{x: 0, y: 0},
+		{x: 2, y: 2},
+		{x: 0, y: 3},
 	})
 }

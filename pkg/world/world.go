@@ -75,6 +75,19 @@ func (wld *World) Update(delta float64) error {
 	return wld.UpdateGroup(system.DefaultGroup, delta)
 }
 
+func (wld *World) NotifyGroup(group string, event interface{}, delta float64) error {
+	for _, s := range wld.systems[group] {
+		if err := s.Notify(wld.View, event, delta); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (wld *World) Notify(event interface{}, delta float64) error {
+	return wld.NotifyGroup(system.DefaultGroup, event, delta)
+}
+
 func New() *World {
 	return &World{
 		View:    view.New(),

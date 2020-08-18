@@ -32,4 +32,5 @@ const (
 
 type System interface {
 	Update(view *view.View, delta float64) error
+	Notify(view *view.View, event interface{}, delta float64) error
 }
