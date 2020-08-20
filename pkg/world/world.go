@@ -20,6 +20,7 @@
  *  THE SOFTWARE.
  */
 
+// Package world allows to create an use our ECS World
 package world
 
 import (
@@ -30,6 +31,7 @@ import (
 
 type eventHold []interface{}
 
+// World is a view.View that contains the entity.Entity and System of our ECS
 type World struct {
 	*view.View
 	systems map[string][]System
@@ -40,6 +42,7 @@ const (
 	defaultSystemGroup = "DEFAULT_GROUP"
 )
 
+// String get a string representation of our World
 func (wld World) String() string {
 	result := ""
 
@@ -57,6 +60,7 @@ func (wld World) String() string {
 	return result
 }
 
+// AddSystemToGroup adds the given System to a given group
 func (wld *World) AddSystemToGroup(sys System, group string) {
 	if _, ok := wld.systems[group]; !ok {
 		wld.systems[group] = make([]System, 0)
@@ -64,10 +68,12 @@ func (wld *World) AddSystemToGroup(sys System, group string) {
 	wld.systems[group] = append(wld.systems[group], sys)
 }
 
+// AddSystem adds the given System to the default group
 func (wld *World) AddSystem(sys System) {
 	wld.AddSystemToGroup(sys, defaultSystemGroup)
 }
 
+// sendGroupEvents send the pending events to the System on the given group
 func (wld *World) sendGroupEvents(group string, delta float64) error {
 	//if this group has a event hold
 	if h, ok := wld.events[group]; ok {
@@ -90,6 +96,7 @@ func (wld *World) sendGroupEvents(group string, delta float64) error {
 	return nil
 }
 
+// UpdateGroup ask to update the System on the given group, and send the pending events
 func (wld *World) UpdateGroup(group string, delta float64) error {
 	for _, s := range wld.systems[group] {
 		if err := s.Update(wld, delta); err != nil {
@@ -104,26 +111,29 @@ func (wld *World) UpdateGroup(group string, delta float64) error {
 	return nil
 }
 
+// Update ask to update the System on the default group and send the pending events
 func (wld *World) Update(delta float64) error {
 	return wld.UpdateGroup(defaultSystemGroup, delta)
 }
 
+// NotifyGroup add an event to be sent to the given group
 func (wld *World) NotifyGroup(group string, event interface{}) error {
 	// if this group has not a event hold for this group create it
 	if _, ok := wld.events[group]; !ok {
 		wld.events[group] = make([]interface{}, 0)
 	}
-
 	// add the event
 	wld.events[group] = append(wld.events[group], event)
 
 	return nil
 }
 
+// Notify add an event to be sent to the default group
 func (wld *World) Notify(event interface{}) error {
 	return wld.NotifyGroup(defaultSystemGroup, event)
 }
 
+// New creates a new World
 func New() *World {
 	return &World{
 		View:    view.New(),

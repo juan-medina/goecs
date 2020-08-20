@@ -117,7 +117,7 @@ func TestEntity_Get(t *testing.T) {
 	gotPos, ok := ent1.Get(PosType).(Pos)
 
 	if !ok {
-		t.Fatalf("expect cast is ok, but it wasn't")
+		t.Fatalf("expect get is ok, but it wasn't")
 	}
 
 	if !reflect.DeepEqual(gotPos, expectPos) {

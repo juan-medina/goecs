@@ -20,6 +20,7 @@
  *  THE SOFTWARE.
  */
 
+// Package view allows to get a View of entity.Entity objects
 package view
 
 import (
@@ -28,19 +29,23 @@ import (
 	"reflect"
 )
 
+// View represent a set of entity.Entity objects
 type View struct {
 	entities []*entity.Entity
 }
 
+// String get a string representation of a View
 func (vw View) String() string {
 	return fmt.Sprintf("View{entities: %v}", vw.entities)
 }
 
+// Add a entity.Entity instance to a View
 func (vw *View) Add(ent *entity.Entity) *entity.Entity {
 	vw.entities = append(vw.entities, ent)
 	return ent
 }
 
+// Remove a entity.Entity from a View
 func (vw *View) Remove(ent *entity.Entity) {
 	i := 0
 	for _, v := range vw.entities {
@@ -58,10 +63,12 @@ func (vw *View) Remove(ent *entity.Entity) {
 	vw.entities = vw.entities[:i]
 }
 
+// Size of entity.Entity in the View
 func (vw View) Size() int {
 	return len(vw.entities)
 }
 
+// Entities return slice of entity.Entity for the given varg reflect.Type
 func (vw View) Entities(rtypes ...reflect.Type) []*entity.Entity {
 	result := make([]*entity.Entity, 0)
 
@@ -74,25 +81,28 @@ func (vw View) Entities(rtypes ...reflect.Type) []*entity.Entity {
 	return result
 }
 
+// Entity return the first entity.Entity for the given varg reflect.Type in the View, nil
+// if they are none
 func (vw View) Entity(rtypes ...reflect.Type) *entity.Entity {
-	entities := vw.Entities(rtypes...)
-	if len(entities) == 0 {
-		return nil
-	} else {
+	if entities := vw.Entities(rtypes...); len(entities) != 0 {
 		return entities[0]
 	}
+	return nil
 }
 
+// SubView generate a new View from the given varg reflect.Type
 func (vw View) SubView(rtypes ...reflect.Type) *View {
 	return fromEntities(vw.Entities(rtypes...))
 }
 
+// New creates a new empty View
 func New() *View {
 	return &View{
 		entities: make([]*entity.Entity, 0),
 	}
 }
 
+// fromEntities creates a View with the given slice of entity.Entity
 func fromEntities(entities []*entity.Entity) *View {
 	view := New()
 

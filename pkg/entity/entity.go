@@ -20,6 +20,7 @@
  *  THE SOFTWARE.
  */
 
+// Package entity  contains the objects to manage the Entity objects in a ECS
 package entity
 
 import (
@@ -27,10 +28,12 @@ import (
 	"reflect"
 )
 
+// Entity represents a instance of an object in a ECS
 type Entity struct {
 	components map[reflect.Type]interface{}
 }
 
+// String : get a string representation of an Entity
 func (ent *Entity) String() string {
 	var result = ""
 
@@ -44,6 +47,7 @@ func (ent *Entity) String() string {
 	return "Entity{" + result + "}"
 }
 
+// New creates a new Entity giving a set of varg components
 func New(components ...interface{}) *Entity {
 	ent := Entity{
 		components: make(map[reflect.Type]interface{}),
@@ -56,19 +60,23 @@ func New(components ...interface{}) *Entity {
 	return &ent
 }
 
+// Add a new component into an Entity
 func (ent *Entity) Add(component interface{}) *Entity {
 	ent.components[reflect.TypeOf(component)] = component
 	return ent
 }
 
+// Set a new component into an Entity
 func (ent *Entity) Set(component interface{}) *Entity {
 	return ent.Add(component)
 }
 
+// Get the component of the given reflect.Type
 func (ent Entity) Get(rtype reflect.Type) interface{} {
 	return ent.components[rtype]
 }
 
+// Contains check that the Entity has the given varg reflect.Type
 func (ent Entity) Contains(rtypes ...reflect.Type) bool {
 	var contains = true
 

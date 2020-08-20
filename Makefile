@@ -26,7 +26,7 @@ GOTOOL=$(GOCMD) tool
 COVERAGE=$(GOTOOL) cover
 GOFORMAT=$(GOCMD) fmt
 GOVET=$(GOCMD) vet
-
+GOLINT=golint
 default: test
 
 vet:
@@ -37,3 +37,6 @@ coverage: test
 	$(COVERAGE) -html=coverage.out
 format:
 	$(GOFORMAT) ./...
+lint:
+	$(GOLINT) -set_exit_status ./...
+validate: lint test
