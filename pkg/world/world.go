@@ -28,9 +28,12 @@ import (
 	"reflect"
 )
 
+type eventHold []interface{}
+
 type World struct {
 	*view.View
 	systems map[string][]System
+	events  map[string]eventHold
 }
 
 const (
@@ -65,12 +68,39 @@ func (wld *World) AddSystem(sys System) {
 	wld.AddSystemToGroup(sys, defaultSystemGroup)
 }
 
+func (wld *World) sendGroupEvents(group string, delta float64) error {
+	//if this group has a event hold
+	if h, ok := wld.events[group]; ok {
+		// get all events for this hold
+		for i, e := range h {
+			// range systems on this group
+			for _, s := range wld.systems[group] {
+				// notify the event to the system
+				if err := s.Notify(wld, e, delta); err != nil {
+					return err
+				}
+			}
+			//clear the event
+			wld.events[group][i] = nil
+		}
+		//empty hold
+		wld.events[group] = wld.events[group][:0]
+	}
+
+	return nil
+}
+
 func (wld *World) UpdateGroup(group string, delta float64) error {
 	for _, s := range wld.systems[group] {
 		if err := s.Update(wld, delta); err != nil {
 			return err
 		}
 	}
+
+	if err := wld.sendGroupEvents(group, delta); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -78,22 +108,26 @@ func (wld *World) Update(delta float64) error {
 	return wld.UpdateGroup(defaultSystemGroup, delta)
 }
 
-func (wld *World) NotifyGroup(group string, event interface{}, delta float64) error {
-	for _, s := range wld.systems[group] {
-		if err := s.Notify(wld, event, delta); err != nil {
-			return err
-		}
+func (wld *World) NotifyGroup(group string, event interface{}) error {
+	// if this group has not a event hold for this group create it
+	if _, ok := wld.events[group]; !ok {
+		wld.events[group] = make([]interface{}, 0)
 	}
+
+	// add the event
+	wld.events[group] = append(wld.events[group], event)
+
 	return nil
 }
 
-func (wld *World) Notify(event interface{}, delta float64) error {
-	return wld.NotifyGroup(defaultSystemGroup, event, delta)
+func (wld *World) Notify(event interface{}) error {
+	return wld.NotifyGroup(defaultSystemGroup, event)
 }
 
 func New() *World {
 	return &World{
 		View:    view.New(),
 		systems: make(map[string][]System, 0),
+		events:  make(map[string]eventHold, 0),
 	}
 }
