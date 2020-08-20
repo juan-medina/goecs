@@ -24,24 +24,24 @@ package view
 
 import (
 	"fmt"
-	"github.com/juan-medina/goecs/pkg/entitiy"
+	"github.com/juan-medina/goecs/pkg/entity"
 	"reflect"
 )
 
 type View struct {
-	entities []*entitiy.Entity
+	entities []*entity.Entity
 }
 
 func (vw View) String() string {
 	return fmt.Sprintf("View{entities: %v}", vw.entities)
 }
 
-func (vw *View) Add(ent *entitiy.Entity) *entitiy.Entity {
+func (vw *View) Add(ent *entity.Entity) *entity.Entity {
 	vw.entities = append(vw.entities, ent)
 	return ent
 }
 
-func (vw *View) Remove(ent *entitiy.Entity) {
+func (vw *View) Remove(ent *entity.Entity) {
 	i := 0
 	for _, v := range vw.entities {
 		if v != ent {
@@ -62,8 +62,8 @@ func (vw View) Size() int {
 	return len(vw.entities)
 }
 
-func (vw View) Entities(rtypes ...reflect.Type) []*entitiy.Entity {
-	result := make([]*entitiy.Entity, 0)
+func (vw View) Entities(rtypes ...reflect.Type) []*entity.Entity {
+	result := make([]*entity.Entity, 0)
 
 	for _, v := range vw.entities {
 		if v.Contains(rtypes...) {
@@ -74,7 +74,7 @@ func (vw View) Entities(rtypes ...reflect.Type) []*entitiy.Entity {
 	return result
 }
 
-func (vw View) Entity(rtypes ...reflect.Type) *entitiy.Entity {
+func (vw View) Entity(rtypes ...reflect.Type) *entity.Entity {
 	entities := vw.Entities(rtypes...)
 	if len(entities) == 0 {
 		return nil
@@ -89,11 +89,11 @@ func (vw View) SubView(rtypes ...reflect.Type) *View {
 
 func New() *View {
 	return &View{
-		entities: make([]*entitiy.Entity, 0),
+		entities: make([]*entity.Entity, 0),
 	}
 }
 
-func fromEntities(entities []*entitiy.Entity) *View {
+func fromEntities(entities []*entity.Entity) *View {
 	view := New()
 
 	view.entities = entities

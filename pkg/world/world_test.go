@@ -24,7 +24,7 @@ package world
 
 import (
 	"errors"
-	"github.com/juan-medina/goecs/pkg/entitiy"
+	"github.com/juan-medina/goecs/pkg/entity"
 	"reflect"
 	"testing"
 )
@@ -122,9 +122,9 @@ func TestWorld_Update(t *testing.T) {
 		world := New()
 		world.AddSystem(&HMovementSystem{})
 
-		world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
+		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
 		_ = world.Update(0)
 
@@ -140,9 +140,9 @@ func TestWorld_Update(t *testing.T) {
 		world.AddSystem(&HMovementSystem{})
 		world.AddSystem(&VMovementSystem{})
 
-		world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
+		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
 		_ = world.Update(0)
 
@@ -158,9 +158,9 @@ func TestWorld_Update(t *testing.T) {
 		world.AddSystemToGroup(&HMovementSystem{}, "special group")
 		world.AddSystem(&VMovementSystem{})
 
-		world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
+		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
 		_ = world.Update(0)
 
@@ -175,9 +175,9 @@ func TestWorld_Update(t *testing.T) {
 		world := New()
 		world.AddSystemToGroup(&HMovementSystem{}, "special group")
 
-		world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
+		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
 		_ = world.Update(0)
 
@@ -194,9 +194,9 @@ func TestWorld_UpdateGroup(t *testing.T) {
 		world := New()
 		world.AddSystem(&HMovementSystem{})
 
-		world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
+		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
 		_ = world.Update(0)
 
@@ -212,9 +212,9 @@ func TestWorld_UpdateGroup(t *testing.T) {
 		world.AddSystem(&HMovementSystem{})
 		world.AddSystem(&VMovementSystem{})
 
-		world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
+		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
 		_ = world.UpdateGroup(defaultSystemGroup, 0)
 
@@ -230,9 +230,9 @@ func TestWorld_UpdateGroup(t *testing.T) {
 		world.AddSystemToGroup(&HMovementSystem{}, "special group")
 		world.AddSystem(&VMovementSystem{})
 
-		world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
+		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
 		_ = world.UpdateGroup("special group", 0)
 
@@ -247,9 +247,9 @@ func TestWorld_UpdateGroup(t *testing.T) {
 		world := New()
 		world.AddSystemToGroup(&HMovementSystem{}, "special group")
 
-		world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
+		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
 		_ = world.UpdateGroup("special group", 0)
 
@@ -264,9 +264,9 @@ func TestWorld_UpdateGroup(t *testing.T) {
 		world := New()
 		world.AddSystemToGroup(&HMovementSystem{}, "special group")
 
-		world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
+		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
 		_ = world.UpdateGroup(defaultSystemGroup, 0)
 
@@ -298,9 +298,9 @@ func TestWorld_String(t *testing.T) {
 
 	world.AddSystemToGroup(&HMovementSystem{}, "special")
 
-	world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-	world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
-	world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+	world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+	world.Add(entity.New().Add(Pos{x: 2, y: 2}))
+	world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
 	s := world.String()
 
@@ -317,7 +317,7 @@ func TestWorld_Update_Error(t *testing.T) {
 
 	world.AddSystemToGroup(&HMovementSystem{}, "special")
 
-	world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+	world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
 
 	e := world.Update(0)
 
@@ -347,9 +347,9 @@ func TestWorld_Notify(t *testing.T) {
 
 	world.AddSystemToGroup(&HMovementSystem{}, "special")
 
-	world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-	world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
-	world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+	world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+	world.Add(entity.New().Add(Pos{x: 2, y: 2}))
+	world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
 	_ = world.Update(0)
 
@@ -394,9 +394,9 @@ func TestWorld_Notify_Error(t *testing.T) {
 
 	world.AddSystemToGroup(&HMovementSystem{}, "special")
 
-	world.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-	world.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
-	world.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+	world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+	world.Add(entity.New().Add(Pos{x: 2, y: 2}))
+	world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
 	e := world.UpdateGroup("special", 0)
 

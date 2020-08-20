@@ -20,7 +20,7 @@
  *  THE SOFTWARE.
  */
 
-package entitiy
+package entity
 
 import (
 	"reflect"

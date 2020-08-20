@@ -23,7 +23,7 @@
 package view
 
 import (
-	"github.com/juan-medina/goecs/pkg/entitiy"
+	"github.com/juan-medina/goecs/pkg/entity"
 	"reflect"
 	"testing"
 )
@@ -67,7 +67,7 @@ func TestNew(t *testing.T) {
 func TestView_Add(t *testing.T) {
 	view := New()
 
-	view.Add(entitiy.New().Add(Pos{
+	view.Add(entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	}).Add(Vel{
@@ -85,7 +85,7 @@ func TestView_Add(t *testing.T) {
 
 func TestView_Size(t *testing.T) {
 	view := New()
-	ent1 := entitiy.New().Add(Pos{
+	ent1 := entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	}).Add(Vel{
@@ -95,7 +95,7 @@ func TestView_Size(t *testing.T) {
 
 	view.Add(ent1)
 
-	ent2 := entitiy.New().Add(Pos{
+	ent2 := entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	})
@@ -110,7 +110,7 @@ func TestView_Size(t *testing.T) {
 	}
 }
 
-func entitiesEqual(a, b []*entitiy.Entity) bool {
+func entitiesEqual(a, b []*entity.Entity) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -124,7 +124,7 @@ func entitiesEqual(a, b []*entitiy.Entity) bool {
 
 func TestView_Entities(t *testing.T) {
 	view := New()
-	ent1 := entitiy.New().Add(Pos{
+	ent1 := entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	}).Add(Vel{
@@ -134,7 +134,7 @@ func TestView_Entities(t *testing.T) {
 
 	view.Add(ent1)
 
-	ent2 := entitiy.New().Add(Pos{
+	ent2 := entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	})
@@ -144,28 +144,28 @@ func TestView_Entities(t *testing.T) {
 	type testCase struct {
 		name   string
 		params []reflect.Type
-		expect []*entitiy.Entity
+		expect []*entity.Entity
 	}
 	var cases = []testCase{
 		{
 			name:   "should get ent1 asking for pos and vel",
 			params: []reflect.Type{PosType, VelType},
-			expect: []*entitiy.Entity{ent1},
+			expect: []*entity.Entity{ent1},
 		},
 		{
 			name:   "should get ent1 and ent2 asking only for pos",
 			params: []reflect.Type{PosType},
-			expect: []*entitiy.Entity{ent1, ent2},
+			expect: []*entity.Entity{ent1, ent2},
 		},
 		{
 			name:   "should get no entities with non existing component",
 			params: []reflect.Type{GameObjectType},
-			expect: []*entitiy.Entity{},
+			expect: []*entity.Entity{},
 		},
 		{
 			name:   "should get ent1 asking for only vel",
 			params: []reflect.Type{VelType},
-			expect: []*entitiy.Entity{ent1},
+			expect: []*entity.Entity{ent1},
 		},
 	}
 	for _, tt := range cases {
@@ -183,7 +183,7 @@ func TestView_Entities(t *testing.T) {
 func TestView_Entities_Range(t *testing.T) {
 	view := New()
 
-	view.Add(entitiy.New().Add(Pos{
+	view.Add(entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	}).Add(Vel{
@@ -191,7 +191,7 @@ func TestView_Entities_Range(t *testing.T) {
 		y: 2,
 	}))
 
-	view.Add(entitiy.New().Add(Pos{
+	view.Add(entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	}).Add(Vel{
@@ -199,7 +199,7 @@ func TestView_Entities_Range(t *testing.T) {
 		y: 2,
 	}))
 
-	view.Add(entitiy.New().Add(Pos{
+	view.Add(entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	}).Add(Vel{
@@ -217,7 +217,7 @@ func TestView_Entities_Range(t *testing.T) {
 func TestView_SubView(t *testing.T) {
 	view := New()
 
-	view.Add(entitiy.New().Add(Pos{
+	view.Add(entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	}).Add(Vel{
@@ -225,12 +225,12 @@ func TestView_SubView(t *testing.T) {
 		y: 2,
 	}))
 
-	view.Add(entitiy.New().Add(Pos{
+	view.Add(entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	}))
 
-	view.Add(entitiy.New().Add(Pos{
+	view.Add(entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	}).Add(Vel{
@@ -251,7 +251,7 @@ func TestView_SubView(t *testing.T) {
 
 func TestView_Entity(t *testing.T) {
 	view := New()
-	ent1 := entitiy.New().Add(Pos{
+	ent1 := entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	}).Add(Vel{
@@ -261,14 +261,14 @@ func TestView_Entity(t *testing.T) {
 
 	view.Add(ent1)
 
-	ent2 := entitiy.New().Add(Pos{
+	ent2 := entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	})
 
 	view.Add(ent2)
 
-	ent3 := entitiy.New().Add(GameObject{
+	ent3 := entity.New().Add(GameObject{
 		name: "box",
 	})
 
@@ -277,7 +277,7 @@ func TestView_Entity(t *testing.T) {
 	type testCase struct {
 		name   string
 		params []reflect.Type
-		expect *entitiy.Entity
+		expect *entity.Entity
 	}
 	var cases = []testCase{
 		{
@@ -326,7 +326,7 @@ func TestView_Entity(t *testing.T) {
 func TestView_Remove(t *testing.T) {
 	view := New()
 
-	ent1 := view.Add(entitiy.New().Add(Pos{
+	ent1 := view.Add(entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	}).Add(Vel{
@@ -334,12 +334,12 @@ func TestView_Remove(t *testing.T) {
 		y: 2,
 	}))
 
-	ent2 := view.Add(entitiy.New().Add(Pos{
+	ent2 := view.Add(entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	}))
 
-	view.Add(entitiy.New().Add(Pos{
+	view.Add(entity.New().Add(Pos{
 		x: 1,
 		y: 1,
 	}).Add(Vel{
@@ -369,9 +369,9 @@ func TestView_Remove(t *testing.T) {
 func TestView_String(t *testing.T) {
 	view := New()
 
-	view.Add(entitiy.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-	view.Add(entitiy.New().Add(Pos{x: 2, y: 2}))
-	view.Add(entitiy.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+	view.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+	view.Add(entity.New().Add(Pos{x: 2, y: 2}))
+	view.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
 	s := view.String()
 
