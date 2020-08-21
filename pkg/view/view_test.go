@@ -29,15 +29,15 @@ import (
 )
 
 type Pos struct {
-	x float64
-	y float64
+	x float32
+	y float32
 }
 
 var PosType = reflect.TypeOf(Pos{})
 
 type Vel struct {
-	x float64
-	y float64
+	x float32
+	y float32
 }
 
 var VelType = reflect.TypeOf(Vel{})

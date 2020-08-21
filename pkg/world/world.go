@@ -74,7 +74,7 @@ func (wld *World) AddSystem(sys System) {
 }
 
 // sendGroupEvents send the pending events to the System on the given group
-func (wld *World) sendGroupEvents(group string, delta float64) error {
+func (wld *World) sendGroupEvents(group string, delta float32) error {
 	//if this group has a event hold
 	if h, ok := wld.events[group]; ok {
 		// get all events for this hold
@@ -97,7 +97,7 @@ func (wld *World) sendGroupEvents(group string, delta float64) error {
 }
 
 // UpdateGroup ask to update the System on the given group, and send the pending events
-func (wld *World) UpdateGroup(group string, delta float64) error {
+func (wld *World) UpdateGroup(group string, delta float32) error {
 	for _, s := range wld.systems[group] {
 		if err := s.Update(wld, delta); err != nil {
 			return err
@@ -112,7 +112,7 @@ func (wld *World) UpdateGroup(group string, delta float64) error {
 }
 
 // Update ask to update the System on the default group and send the pending events
-func (wld *World) Update(delta float64) error {
+func (wld *World) Update(delta float32) error {
 	return wld.UpdateGroup(defaultSystemGroup, delta)
 }
 

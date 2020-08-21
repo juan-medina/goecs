@@ -30,15 +30,15 @@ import (
 )
 
 type Pos struct {
-	x float64
-	y float64
+	x float32
+	y float32
 }
 
 var PosType = reflect.TypeOf(Pos{})
 
 type Vel struct {
-	x float64
-	y float64
+	x float32
+	y float32
 }
 
 var VelType = reflect.TypeOf(Vel{})
@@ -47,7 +47,7 @@ type resetEvent struct{}
 
 type HMovementSystem struct{}
 
-func (m *HMovementSystem) Notify(world *World, e interface{}, _ float64) error {
+func (m *HMovementSystem) Notify(world *World, e interface{}, _ float32) error {
 	switch e.(type) {
 	case resetEvent:
 		for _, v := range world.Entities(PosType, VelType) {
@@ -59,7 +59,7 @@ func (m *HMovementSystem) Notify(world *World, e interface{}, _ float64) error {
 	return nil
 }
 
-func (m *HMovementSystem) Update(world *World, _ float64) error {
+func (m *HMovementSystem) Update(world *World, _ float32) error {
 	for _, v := range world.Entities(PosType, VelType) {
 		pos := v.Get(PosType).(Pos)
 		vel := v.Get(VelType).(Vel)
@@ -73,7 +73,7 @@ func (m *HMovementSystem) Update(world *World, _ float64) error {
 
 type VMovementSystem struct{}
 
-func (m *VMovementSystem) Notify(world *World, e interface{}, _ float64) error {
+func (m *VMovementSystem) Notify(world *World, e interface{}, _ float32) error {
 	switch e.(type) {
 	case resetEvent:
 		for _, v := range world.Entities(PosType, VelType) {
@@ -84,7 +84,7 @@ func (m *VMovementSystem) Notify(world *World, e interface{}, _ float64) error {
 	}
 	return nil
 }
-func (m *VMovementSystem) Update(world *World, _ float64) error {
+func (m *VMovementSystem) Update(world *World, _ float32) error {
 	for _, v := range world.Entities(PosType, VelType) {
 		pos := v.Get(PosType).(Pos)
 		vel := v.Get(VelType).(Vel)
@@ -100,21 +100,21 @@ var errFailure = errors.New("failure")
 
 type FailureUpdateSystem struct{}
 
-func (f *FailureUpdateSystem) Notify(_ *World, _ interface{}, _ float64) error {
+func (f *FailureUpdateSystem) Notify(_ *World, _ interface{}, _ float32) error {
 	return nil
 }
 
-func (f FailureUpdateSystem) Update(_ *World, _ float64) error {
+func (f FailureUpdateSystem) Update(_ *World, _ float32) error {
 	return errFailure
 }
 
 type FailureNotifySystem struct{}
 
-func (f *FailureNotifySystem) Notify(_ *World, _ interface{}, _ float64) error {
+func (f *FailureNotifySystem) Notify(_ *World, _ interface{}, _ float32) error {
 	return errFailure
 }
 
-func (f FailureNotifySystem) Update(_ *World, _ float64) error {
+func (f FailureNotifySystem) Update(_ *World, _ float32) error {
 	return nil
 }
 func TestWorld_Update(t *testing.T) {

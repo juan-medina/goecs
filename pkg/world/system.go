@@ -25,7 +25,7 @@ package world
 // System get invoke with Update() and Notify() from a World
 type System interface {
 	// Update ask the System to Update the World, when World.Update get invoke
-	Update(world *World, delta float64) error
+	Update(world *World, delta float32) error
 	// Notify the System that a new event has been received by World.Notify
-	Notify(world *World, event interface{}, delta float64) error
+	Notify(world *World, event interface{}, delta float32) error
 }
