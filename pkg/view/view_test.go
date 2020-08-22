@@ -249,6 +249,30 @@ func TestView_SubView(t *testing.T) {
 	}
 }
 
+func TestView_SubView_Empty(t *testing.T) {
+	view := New()
+
+	view.Add(entity.New().Add(Pos{
+		x: 1,
+		y: 1,
+	}))
+
+	view.Add(entity.New().Add(Pos{
+		x: 1,
+		y: 1,
+	}))
+
+	subview := view.SubView(VelType)
+
+	got := subview.Size()
+
+	expect := 0
+
+	if got != expect {
+		t.Fatalf("error on sub view size got %d, want %d", got, expect)
+	}
+}
+
 func TestView_Entity(t *testing.T) {
 	view := New()
 	ent1 := entity.New().Add(Pos{

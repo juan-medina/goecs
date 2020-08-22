@@ -70,14 +70,16 @@ func (vw View) Size() int {
 
 // Entities return slice of entity.Entity for the given varg reflect.Type
 func (vw View) Entities(rtypes ...reflect.Type) []*entity.Entity {
-	result := make([]*entity.Entity, 0)
+	result := make([]*entity.Entity, len(vw.entities))
 
+	count := 0
 	for _, v := range vw.entities {
 		if v.Contains(rtypes...) {
-			result = append(result, v)
+			result[count] = v
+			count++
 		}
 	}
-
+	result = result[:count]
 	return result
 }
 
