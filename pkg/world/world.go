@@ -29,18 +29,12 @@ import (
 	"reflect"
 )
 
-type eventHold []interface{}
-
 // World is a view.View that contains the entity.Entity and System of our ECS
 type World struct {
 	*view.View
-	systems map[string][]System
-	events  map[string]eventHold
+	systems []System
+	events  []interface{}
 }
-
-const (
-	defaultSystemGroup = "DEFAULT_GROUP"
-)
 
 // String get a string representation of our World
 func (wld World) String() string {
@@ -48,96 +42,69 @@ func (wld World) String() string {
 
 	result += fmt.Sprintf("World[view: %v, systems: [", wld.View)
 
-	for g := range wld.systems {
-		result += fmt.Sprintf("%s:[", g)
-		for _, s := range wld.systems[g] {
-			result += fmt.Sprintf("%s,", reflect.TypeOf(s).String())
-		}
-		result += "],"
+	for _, s := range wld.systems {
+		result += fmt.Sprintf("%s,", reflect.TypeOf(s).String())
 	}
+
 	result += "]"
 
 	return result
 }
 
-// AddSystemToGroup adds the given System to a given group
-func (wld *World) AddSystemToGroup(sys System, group string) {
-	if _, ok := wld.systems[group]; !ok {
-		wld.systems[group] = make([]System, 0)
-	}
-	wld.systems[group] = append(wld.systems[group], sys)
-}
-
-// AddSystem adds the given System to the default group
+// AddSystem adds the given System to the world
 func (wld *World) AddSystem(sys System) {
-	wld.AddSystemToGroup(sys, defaultSystemGroup)
+	wld.systems = append(wld.systems, sys)
 }
 
-// sendGroupEvents send the pending events to the System on the given group
-func (wld *World) sendGroupEvents(group string, delta float32) error {
-	//if this group has a event hold
-	if h, ok := wld.events[group]; ok {
-		// get all events for this hold
-		for i, e := range h {
-			// range systems on this group
-			for _, s := range wld.systems[group] {
-				// notify the event to the system
-				if err := s.Notify(wld, e, delta); err != nil {
-					return err
-				}
+// sendEvents send the pending events to the System on the world
+func (wld *World) sendEvents(delta float32) error {
+	// get all events for this hold
+	for i, e := range wld.events {
+		// range systems
+		for _, s := range wld.systems {
+			// notify the event to the system
+			if err := s.Notify(wld, e, delta); err != nil {
+				return err
 			}
-			//clear the event
-			wld.events[group][i] = nil
 		}
-		//empty hold
-		wld.events[group] = wld.events[group][:0]
+		//clear the event
+		wld.events[i] = nil
 	}
+
+	//empty hold
+	wld.events = wld.events[:0]
 
 	return nil
 }
 
-// UpdateGroup ask to update the System on the given group, and send the pending events
-func (wld *World) UpdateGroup(group string, delta float32) error {
-	for _, s := range wld.systems[group] {
+// Update ask to update the System send the pending events
+func (wld *World) Update(delta float32) error {
+	for _, s := range wld.systems {
 		if err := s.Update(wld, delta); err != nil {
 			return err
 		}
 	}
 
-	if err := wld.sendGroupEvents(group, delta); err != nil {
+	if err := wld.sendEvents(delta); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// Update ask to update the System on the default group and send the pending events
-func (wld *World) Update(delta float32) error {
-	return wld.UpdateGroup(defaultSystemGroup, delta)
-}
-
-// NotifyGroup add an event to be sent to the given group
-func (wld *World) NotifyGroup(group string, event interface{}) error {
-	// if this group has not a event hold for this group create it
-	if _, ok := wld.events[group]; !ok {
-		wld.events[group] = make([]interface{}, 0)
-	}
+// Notify add an event to be sent
+func (wld *World) Notify(event interface{}) error {
 	// add the event
-	wld.events[group] = append(wld.events[group], event)
+	wld.events = append(wld.events, event)
 
 	return nil
-}
-
-// Notify add an event to be sent to the default group
-func (wld *World) Notify(event interface{}) error {
-	return wld.NotifyGroup(defaultSystemGroup, event)
 }
 
 // New creates a new World
 func New() *World {
 	return &World{
 		View:    view.New(),
-		systems: make(map[string][]System, 0),
-		events:  make(map[string]eventHold, 0),
+		systems: make([]System, 0),
+		events:  make([]interface{}, 0),
 	}
 }

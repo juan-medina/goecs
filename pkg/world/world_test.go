@@ -152,41 +152,6 @@ func TestWorld_Update(t *testing.T) {
 			{x: 7, y: 7},
 		})
 	})
-
-	t.Run("update with special groups", func(t *testing.T) {
-		world := New()
-		world.AddSystemToGroup(&HMovementSystem{}, "special group")
-		world.AddSystem(&VMovementSystem{})
-
-		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
-
-		_ = world.Update(0)
-
-		expectPositions(t, world, []Pos{
-			{x: 0, y: 1},
-			{x: 2, y: 2},
-			{x: 3, y: 7},
-		})
-	})
-
-	t.Run("update only to special groups", func(t *testing.T) {
-		world := New()
-		world.AddSystemToGroup(&HMovementSystem{}, "special group")
-
-		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
-
-		_ = world.Update(0)
-
-		expectPositions(t, world, []Pos{
-			{x: 0, y: 0},
-			{x: 2, y: 2},
-			{x: 3, y: 3},
-		})
-	})
 }
 
 func TestWorld_UpdateGroup(t *testing.T) {
@@ -216,64 +181,12 @@ func TestWorld_UpdateGroup(t *testing.T) {
 		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
 		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
-		_ = world.UpdateGroup(defaultSystemGroup, 0)
+		_ = world.Update(0)
 
 		expectPositions(t, world, []Pos{
 			{x: 1, y: 1},
 			{x: 2, y: 2},
 			{x: 7, y: 7},
-		})
-	})
-
-	t.Run("update with special groups", func(t *testing.T) {
-		world := New()
-		world.AddSystemToGroup(&HMovementSystem{}, "special group")
-		world.AddSystem(&VMovementSystem{})
-
-		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
-
-		_ = world.UpdateGroup("special group", 0)
-
-		expectPositions(t, world, []Pos{
-			{x: 1, y: 0},
-			{x: 2, y: 2},
-			{x: 7, y: 3},
-		})
-	})
-
-	t.Run("update only to special groups", func(t *testing.T) {
-		world := New()
-		world.AddSystemToGroup(&HMovementSystem{}, "special group")
-
-		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
-
-		_ = world.UpdateGroup("special group", 0)
-
-		expectPositions(t, world, []Pos{
-			{x: 1, y: 0},
-			{x: 2, y: 2},
-			{x: 7, y: 3},
-		})
-	})
-
-	t.Run("update only to no groups", func(t *testing.T) {
-		world := New()
-		world.AddSystemToGroup(&HMovementSystem{}, "special group")
-
-		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
-
-		_ = world.UpdateGroup(defaultSystemGroup, 0)
-
-		expectPositions(t, world, []Pos{
-			{x: 0, y: 0},
-			{x: 2, y: 2},
-			{x: 3, y: 3},
 		})
 	})
 }
@@ -296,8 +209,6 @@ func TestWorld_String(t *testing.T) {
 	world.AddSystem(&HMovementSystem{})
 	world.AddSystem(&VMovementSystem{})
 
-	world.AddSystemToGroup(&HMovementSystem{}, "special")
-
 	world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
 	world.Add(entity.New().Add(Pos{x: 2, y: 2}))
 	world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
@@ -315,8 +226,6 @@ func TestWorld_Update_Error(t *testing.T) {
 	world.AddSystem(&HMovementSystem{})
 	world.AddSystem(&VMovementSystem{})
 
-	world.AddSystemToGroup(&HMovementSystem{}, "special")
-
 	world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
 
 	e := world.Update(0)
@@ -328,24 +237,12 @@ func TestWorld_Update_Error(t *testing.T) {
 	expectPositions(t, world, []Pos{
 		{x: 0, y: 0},
 	})
-
-	e = world.UpdateGroup("special", 0)
-
-	if e != nil {
-		t.Fatalf("shoudl not get error but got %v", e)
-	}
-
-	expectPositions(t, world, []Pos{
-		{x: 1, y: 0},
-	})
 }
 
 func TestWorld_Notify(t *testing.T) {
 	world := New()
 	world.AddSystem(&HMovementSystem{})
 	world.AddSystem(&VMovementSystem{})
-
-	world.AddSystemToGroup(&HMovementSystem{}, "special")
 
 	world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
 	world.Add(entity.New().Add(Pos{x: 2, y: 2}))
@@ -375,15 +272,6 @@ func TestWorld_Notify(t *testing.T) {
 		{x: 2, y: 2},
 		{x: 4, y: 4},
 	})
-
-	_ = world.NotifyGroup("special", resetEvent{})
-	_ = world.UpdateGroup("special", 0)
-
-	expectPositions(t, world, []Pos{
-		{x: 0, y: 1},
-		{x: 2, y: 2},
-		{x: 0, y: 4},
-	})
 }
 
 func TestWorld_Notify_Error(t *testing.T) {
@@ -392,22 +280,20 @@ func TestWorld_Notify_Error(t *testing.T) {
 	world.AddSystem(&HMovementSystem{})
 	world.AddSystem(&VMovementSystem{})
 
-	world.AddSystemToGroup(&HMovementSystem{}, "special")
-
 	world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
 	world.Add(entity.New().Add(Pos{x: 2, y: 2}))
 	world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
 
-	e := world.UpdateGroup("special", 0)
+	e := world.Update(0)
 
 	if e != nil {
 		t.Fatalf("shoudl not get error but got %v", e)
 	}
 
 	expectPositions(t, world, []Pos{
-		{x: 1, y: 0},
+		{x: 1, y: 1},
 		{x: 2, y: 2},
-		{x: 7, y: 3},
+		{x: 7, y: 7},
 	})
 
 	e = world.Notify(resetEvent{})
@@ -423,38 +309,8 @@ func TestWorld_Notify_Error(t *testing.T) {
 	}
 
 	expectPositions(t, world, []Pos{
-		{x: 2, y: 1},
 		{x: 2, y: 2},
-		{x: 11, y: 7},
-	})
-
-	e = world.Update(0)
-
-	if !errors.Is(e, errFailure) {
-		t.Fatalf("shoudl get failure but got %v", e)
-	}
-
-	expectPositions(t, world, []Pos{
-		{x: 3, y: 2},
 		{x: 2, y: 2},
-		{x: 15, y: 11},
-	})
-
-	e = world.NotifyGroup("special", resetEvent{})
-
-	if e != nil {
-		t.Fatalf("shoudl not get error but got %v", e)
-	}
-
-	e = world.Update(0)
-
-	if !errors.Is(e, errFailure) {
-		t.Fatalf("shoudl get failure but got %v", e)
-	}
-
-	expectPositions(t, world, []Pos{
-		{x: 4, y: 3},
-		{x: 2, y: 2},
-		{x: 19, y: 15},
+		{x: 11, y: 11},
 	})
 }
