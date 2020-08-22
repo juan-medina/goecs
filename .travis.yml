@@ -3,7 +3,7 @@ language: go
 go:
     1.14.x
 
-script: make validation
+script: make validate
 
 after_success:
     - bash <(curl -s https://codecov.io/bash)
