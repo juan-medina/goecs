@@ -209,3 +209,12 @@ func TestEntity_String(t *testing.T) {
 		t.Fatalf("shoudl get string, got empty")
 	}
 }
+
+func TestEntity_Id(t *testing.T) {
+	ent1 := New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1})
+	ent2 := New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1})
+
+	if !(ent1.ID() <= ent2.ID()) {
+		t.Fatalf("expect ent1 to have bigger id than ent 2, ent1 %v ent2 %v", ent1, ent2)
+	}
+}

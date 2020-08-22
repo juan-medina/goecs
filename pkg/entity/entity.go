@@ -28,14 +28,24 @@ import (
 	"reflect"
 )
 
+var (
+	lastID = int64(0)
+)
+
 // Entity represents a instance of an object in a ECS
 type Entity struct {
+	id         int64
 	components map[reflect.Type]interface{}
 }
 
+// ID : get the unique id for this Entity
+func (ent Entity) ID() int64 {
+	return ent.id
+}
+
 // String : get a string representation of an Entity
-func (ent *Entity) String() string {
-	var result = ""
+func (ent Entity) String() string {
+	var result = fmt.Sprintf("id{%d} ", ent.id)
 
 	for _, v := range ent.components {
 		if result != "" {
@@ -50,6 +60,7 @@ func (ent *Entity) String() string {
 // New creates a new Entity giving a set of varg components
 func New(components ...interface{}) *Entity {
 	ent := Entity{
+		id:         lastID,
 		components: make(map[reflect.Type]interface{}),
 	}
 
@@ -57,6 +68,7 @@ func New(components ...interface{}) *Entity {
 		ent.Add(v)
 	}
 
+	lastID++
 	return &ent
 }
 
