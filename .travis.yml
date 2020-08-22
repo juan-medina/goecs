@@ -1,7 +1,7 @@
 language: go
 
 go:
-    1.14.x
+    - 1.15.x
 
 script: make validate
 
@@ -9,4 +9,4 @@ after_success:
     - bash <(curl -s https://codecov.io/bash)
 
 before_script:
-    - go get -x github.com/golang/lint/golint
+    - GO111MODULE=off go get -u golang.org/x/lint/golint
