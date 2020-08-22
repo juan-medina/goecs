@@ -33,9 +33,14 @@ import (
 type systemWithPriority struct {
 	system   System
 	priority int32
+	id       int64
 }
 
 const defaultPriority = int32(0)
+
+var (
+	lastID = int64(0)
+)
 
 // World is a view.View that contains the entity.Entity and System of our ECS
 type World struct {
@@ -61,10 +66,7 @@ func (wld World) String() string {
 
 // AddSystem adds the given System to the world
 func (wld *World) AddSystem(sys System) {
-	wld.systems = append(wld.systems, systemWithPriority{
-		system:   sys,
-		priority: defaultPriority,
-	})
+	wld.AddSystemWithPriority(sys, defaultPriority)
 }
 
 // AddSystemWithPriority adds the given System to the world
@@ -72,7 +74,9 @@ func (wld *World) AddSystemWithPriority(sys System, priority int32) {
 	wld.systems = append(wld.systems, systemWithPriority{
 		system:   sys,
 		priority: priority,
+		id:       lastID,
 	})
+	lastID++
 }
 
 // sendEvents send the pending events to the System on the world
@@ -104,7 +108,12 @@ func (wld World) getPriorityList() []systemWithPriority {
 	}
 
 	sort.Slice(result, func(i, j int) bool {
-		return result[i].priority > result[j].priority
+		first := result[i]
+		second := result[j]
+		if first.priority == second.priority {
+			return first.id < second.id
+		}
+		return first.priority > second.priority
 	})
 
 	return result
