@@ -403,3 +403,23 @@ func TestView_String(t *testing.T) {
 		t.Fatalf("shoudl get string, got empty")
 	}
 }
+
+func TestView_Filter(t *testing.T) {
+	view := New()
+
+	view.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+	view.Add(entity.New().Add(Pos{x: 2, y: 2}))
+	view.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+
+	filtered := view.Filter(func(e *entity.Entity) bool {
+		pos := e.Get(PosType).(Pos)
+		return pos.x > 0
+	})
+
+	got := len(filtered)
+	expect := 2
+
+	if got != expect {
+		t.Fatalf("error on view filter got %d, want %d", got, expect)
+	}
+}

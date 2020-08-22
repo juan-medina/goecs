@@ -97,6 +97,21 @@ func (vw View) SubView(rtypes ...reflect.Type) *View {
 	return fromEntities(vw.Entities(rtypes...))
 }
 
+// Filter return a set of entity.Entity trough a filter function
+func (vw View) Filter(filter func(*entity.Entity) bool) []*entity.Entity {
+	result := make([]*entity.Entity, len(vw.entities))
+
+	count := 0
+	for _, v := range vw.entities {
+		if filter(v) {
+			result[count] = v
+			count++
+		}
+	}
+	result = result[:count]
+	return result
+}
+
 // New creates a new empty View
 func New() *View {
 	return &View{
