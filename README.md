@@ -2,7 +2,7 @@
 A simple Go [ECS](https://en.wikipedia.org/wiki/Entity_component_system)
 
 [![License: Apache2](https://img.shields.io/badge/license-Apache%202-blue.svg)](/LICENSE)
-[![go version](https://img.shields.io/github/go-mod/go-version/juan-medina/goecs)](https://pkg.go.dev/mod/github.com/juan-medina/goecs)
+[![go version](https://img.shields.io/github/v/tag/juan-medina/goecs?label=version)](https://pkg.go.dev/mod/github.com/juan-medina/goecs)
 [![godoc](https://godoc.org/github.com/juan-medina/goecs?status.svg)](https://pkg.go.dev/mod/github.com/juan-medina/goecs)
 [![Build Status](https://travis-ci.com/juan-medina/goecs.svg?branch=main)](https://travis-ci.com/juan-medina/goecs)
 [![codecov](https://codecov.io/gh/juan-medina/goecs/branch/main/graph/badge.svg)](https://codecov.io/gh/juan-medina/goecs)
