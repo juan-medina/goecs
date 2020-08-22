@@ -27,12 +27,20 @@ import (
 	"fmt"
 	"github.com/juan-medina/goecs/pkg/view"
 	"reflect"
+	"sort"
 )
+
+type systemWithPriority struct {
+	system   System
+	priority int32
+}
+
+const defaultPriority = int32(0)
 
 // World is a view.View that contains the entity.Entity and System of our ECS
 type World struct {
 	*view.View
-	systems []System
+	systems []systemWithPriority
 	events  []interface{}
 }
 
@@ -53,17 +61,28 @@ func (wld World) String() string {
 
 // AddSystem adds the given System to the world
 func (wld *World) AddSystem(sys System) {
-	wld.systems = append(wld.systems, sys)
+	wld.systems = append(wld.systems, systemWithPriority{
+		system:   sys,
+		priority: defaultPriority,
+	})
+}
+
+// AddSystemWithPriority adds the given System to the world
+func (wld *World) AddSystemWithPriority(sys System, priority int32) {
+	wld.systems = append(wld.systems, systemWithPriority{
+		system:   sys,
+		priority: priority,
+	})
 }
 
 // sendEvents send the pending events to the System on the world
-func (wld *World) sendEvents(delta float32) error {
+func (wld *World) sendEvents(delta float32, systems []systemWithPriority) error {
 	// get all events for this hold
 	for i, e := range wld.events {
 		// range systems
-		for _, s := range wld.systems {
+		for _, s := range systems {
 			// notify the event to the system
-			if err := s.Notify(wld, e, delta); err != nil {
+			if err := s.system.Notify(wld, e, delta); err != nil {
 				return err
 			}
 		}
@@ -77,15 +96,30 @@ func (wld *World) sendEvents(delta float32) error {
 	return nil
 }
 
+func (wld World) getPriorityList() []systemWithPriority {
+	result := make([]systemWithPriority, len(wld.systems))
+
+	for i, v := range wld.systems {
+		result[i] = v
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].priority > result[j].priority
+	})
+
+	return result
+}
+
 // Update ask to update the System send the pending events
 func (wld *World) Update(delta float32) error {
-	for _, s := range wld.systems {
-		if err := s.Update(wld, delta); err != nil {
+	pl := wld.getPriorityList()
+	for _, s := range pl {
+		if err := s.system.Update(wld, delta); err != nil {
 			return err
 		}
 	}
 
-	if err := wld.sendEvents(delta); err != nil {
+	if err := wld.sendEvents(delta, pl); err != nil {
 		return err
 	}
 
@@ -104,7 +138,7 @@ func (wld *World) Notify(event interface{}) error {
 func New() *World {
 	return &World{
 		View:    view.New(),
-		systems: make([]System, 0),
+		systems: make([]systemWithPriority, 0),
 		events:  make([]interface{}, 0),
 	}
 }

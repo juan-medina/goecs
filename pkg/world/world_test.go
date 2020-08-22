@@ -314,3 +314,90 @@ func TestWorld_Notify_Error(t *testing.T) {
 		{x: 11, y: 11},
 	})
 }
+
+var systemCalls []string
+
+type systemA struct{}
+
+func (s systemA) Update(_ *World, _ float32) error {
+	systemCalls = append(systemCalls, "update a")
+	return nil
+}
+func (s systemA) Notify(_ *World, _ interface{}, _ float32) error {
+	systemCalls = append(systemCalls, "notify a")
+	return nil
+}
+
+type systemB struct{}
+
+func (s systemB) Update(_ *World, _ float32) error {
+	systemCalls = append(systemCalls, "update b")
+	return nil
+}
+func (s systemB) Notify(_ *World, _ interface{}, _ float32) error {
+	systemCalls = append(systemCalls, "notify b")
+	return nil
+}
+
+func TestWorld_AddSystemWithPriority(t *testing.T) {
+	type testCase struct {
+		name   string
+		setup  func(wld *World)
+		expect []string
+	}
+	for _, tc := range []testCase{
+		{
+			name: "without priority",
+			setup: func(wld *World) {
+				wld.AddSystem(&systemA{})
+				wld.AddSystem(&systemB{})
+			},
+			expect: []string{
+				"update a",
+				"update b",
+				"notify a",
+				"notify b",
+			},
+		},
+		{
+			name: "with priority",
+			setup: func(wld *World) {
+				wld.AddSystem(&systemA{})
+				wld.AddSystemWithPriority(&systemB{}, 100)
+			},
+			expect: []string{
+				"update b",
+				"update a",
+				"notify b",
+				"notify a",
+			},
+		},
+		{
+			name: "with priority inverted",
+			setup: func(wld *World) {
+				wld.AddSystemWithPriority(&systemA{}, -100)
+				wld.AddSystem(&systemB{})
+			},
+			expect: []string{
+				"update b",
+				"update a",
+				"notify b",
+				"notify a",
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			systemCalls = make([]string, 0)
+			wld := New()
+
+			tc.setup(wld)
+
+			_ = wld.Notify("hello")
+			_ = wld.Update(0)
+
+			if !reflect.DeepEqual(systemCalls, tc.expect) {
+				t.Fatalf("got %v, want %v", systemCalls, tc.expect)
+			}
+		})
+	}
+}
