@@ -48,12 +48,6 @@ type GameObject struct {
 
 var GameObjectType = reflect.TypeOf(GameObject{})
 
-type Player struct {
-	name string
-}
-
-var PlayerType = reflect.TypeOf(Player{})
-
 func TestNew(t *testing.T) {
 	view := New()
 	got := view.Size()
@@ -122,8 +116,9 @@ func entitiesEqual(a, b []*entity.Entity) bool {
 	return true
 }
 
-func TestView_Entities(t *testing.T) {
+func TestView_Iterator(t *testing.T) {
 	view := New()
+
 	ent1 := entity.New().Add(Pos{
 		x: 1,
 		y: 1,
@@ -140,7 +135,6 @@ func TestView_Entities(t *testing.T) {
 	})
 
 	view.Add(ent2)
-
 	type testCase struct {
 		name   string
 		params []reflect.Type
@@ -170,177 +164,14 @@ func TestView_Entities(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			result := view.Entities(tt.params...)
+			result := make([]*entity.Entity, 0)
+			for it := view.Iterator(tt.params...); it.HasNext(); {
+				value := it.Value()
+				result = append(result, value)
+			}
 
 			if !entitiesEqual(result, tt.expect) {
 				t.Fatalf("error on get entities got %v, want %v", result, tt.expect)
-			}
-
-		})
-	}
-}
-
-func TestView_Entities_Range(t *testing.T) {
-	view := New()
-
-	view.Add(entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	}).Add(Vel{
-		x: 2,
-		y: 2,
-	}))
-
-	view.Add(entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	}).Add(Vel{
-		x: 2,
-		y: 2,
-	}))
-
-	view.Add(entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	}).Add(Vel{
-		x: 2,
-		y: 2,
-	}))
-
-	for _, e := range view.Entities() {
-		if !e.Contains(PosType, VelType) {
-			t.Fatalf("error on range on entities they dont haven Pos and Vel")
-		}
-	}
-}
-
-func TestView_SubView(t *testing.T) {
-	view := New()
-
-	view.Add(entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	}).Add(Vel{
-		x: 2,
-		y: 2,
-	}))
-
-	view.Add(entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	}))
-
-	view.Add(entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	}).Add(Vel{
-		x: 2,
-		y: 2,
-	}))
-
-	subview := view.SubView(VelType)
-
-	got := subview.Size()
-
-	expect := 2
-
-	if got != expect {
-		t.Fatalf("error on sub view size got %d, want %d", got, expect)
-	}
-}
-
-func TestView_SubView_Empty(t *testing.T) {
-	view := New()
-
-	view.Add(entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	}))
-
-	view.Add(entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	}))
-
-	subview := view.SubView(VelType)
-
-	got := subview.Size()
-
-	expect := 0
-
-	if got != expect {
-		t.Fatalf("error on sub view size got %d, want %d", got, expect)
-	}
-}
-
-func TestView_Entity(t *testing.T) {
-	view := New()
-	ent1 := entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	}).Add(Vel{
-		x: 2,
-		y: 2,
-	})
-
-	view.Add(ent1)
-
-	ent2 := entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	})
-
-	view.Add(ent2)
-
-	ent3 := entity.New().Add(GameObject{
-		name: "box",
-	})
-
-	view.Add(ent3)
-
-	type testCase struct {
-		name   string
-		params []reflect.Type
-		expect *entity.Entity
-	}
-	var cases = []testCase{
-		{
-			name:   "should get ent1 asking for pos and vel",
-			params: []reflect.Type{PosType, VelType},
-			expect: ent1,
-		},
-		{
-			name:   "should get ent1 asking only for pos",
-			params: []reflect.Type{PosType},
-			expect: ent1,
-		},
-		{
-			name:   "should get ent 3 asking for GameObject",
-			params: []reflect.Type{GameObjectType},
-			expect: ent3,
-		},
-		{
-			name:   "should get ent1 asking for only vel",
-			params: []reflect.Type{VelType},
-			expect: ent1,
-		},
-		{
-			name:   "should get nil asking for only player",
-			params: []reflect.Type{PlayerType},
-			expect: nil,
-		},
-		{
-			name:   "should get nil asking for only pos and GameObject]",
-			params: []reflect.Type{PosType, GameObjectType},
-			expect: nil,
-		},
-	}
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			result := view.Entity(tt.params...)
-
-			if !reflect.DeepEqual(result, tt.expect) {
-				t.Fatalf("error on get entity got %v, want %v", result, tt.expect)
 			}
 
 		})
@@ -371,7 +202,7 @@ func TestView_Remove(t *testing.T) {
 		y: 2,
 	}))
 
-	view.Remove(ent2)
+	_ = view.Remove(ent2)
 
 	got := view.Size()
 	expect := 2
@@ -380,7 +211,7 @@ func TestView_Remove(t *testing.T) {
 		t.Fatalf("error on view size got %d, want %d", got, expect)
 	}
 
-	view.Remove(ent1)
+	_ = view.Remove(ent1)
 
 	got = view.Size()
 	expect = 1
@@ -404,6 +235,7 @@ func TestView_String(t *testing.T) {
 	}
 }
 
+/*
 func TestView_Filter(t *testing.T) {
 	view := New()
 
@@ -423,3 +255,4 @@ func TestView_Filter(t *testing.T) {
 		t.Fatalf("error on view filter got %d, want %d", got, expect)
 	}
 }
+*/

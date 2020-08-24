@@ -25,6 +25,7 @@ package world
 
 import (
 	"fmt"
+	"github.com/juan-medina/goecs/pkg/sparse"
 	"github.com/juan-medina/goecs/pkg/view"
 	"reflect"
 	"sort"
@@ -36,7 +37,13 @@ type systemWithPriority struct {
 	id       int64
 }
 
-const defaultPriority = int32(0)
+const (
+	defaultPriority        = int32(0)
+	eventsInitialCapacity  = 10
+	eventsCapacityGrow     = eventsInitialCapacity / 4
+	systemsInitialCapacity = 100
+	systemsCapacityGrow    = systemsInitialCapacity / 4
+)
 
 var (
 	lastID = int64(0)
@@ -45,8 +52,8 @@ var (
 // World is a view.View that contains the entity.Entity and System of our ECS
 type World struct {
 	*view.View
-	systems []systemWithPriority
-	events  []interface{}
+	systems sparse.Slice
+	events  sparse.Slice
 }
 
 // String get a string representation of our World
@@ -55,8 +62,9 @@ func (wld World) String() string {
 
 	result += fmt.Sprintf("World[view: %v, systems: [", wld.View)
 
-	for _, s := range wld.systems {
-		result += fmt.Sprintf("%s,", reflect.TypeOf(s).String())
+	for it := wld.systems.Iterator(); it.HasNext(); {
+		s := it.Value().(systemWithPriority)
+		result += fmt.Sprintf("%s,", reflect.TypeOf(s.system).String())
 	}
 
 	result += "]"
@@ -69,9 +77,21 @@ func (wld *World) AddSystem(sys System) {
 	wld.AddSystemWithPriority(sys, defaultPriority)
 }
 
+// RemoveSystem deletes the given System from the world
+func (wld *World) RemoveSystem(sys System) error {
+	for it := wld.systems.Iterator(); it.HasNext(); {
+		s := it.Value().(systemWithPriority)
+		if s.system == sys {
+			return wld.systems.Remove(s)
+		}
+	}
+
+	return sparse.ErrItemNotFound
+}
+
 // AddSystemWithPriority adds the given System to the world
 func (wld *World) AddSystemWithPriority(sys System, priority int32) {
-	wld.systems = append(wld.systems, systemWithPriority{
+	wld.systems.Add(systemWithPriority{
 		system:   sys,
 		priority: priority,
 		id:       lastID,
@@ -82,7 +102,8 @@ func (wld *World) AddSystemWithPriority(sys System, priority int32) {
 // sendEvents send the pending events to the System on the world
 func (wld *World) sendEvents(delta float32, systems []systemWithPriority) error {
 	// get all events for this hold
-	for i, e := range wld.events {
+	for it := wld.events.Iterator(); it.HasNext(); {
+		e := it.Value()
 		// range systems
 		for _, s := range systems {
 			// notify the event to the system
@@ -90,21 +111,21 @@ func (wld *World) sendEvents(delta float32, systems []systemWithPriority) error 
 				return err
 			}
 		}
-		//clear the event
-		wld.events[i] = nil
 	}
 
 	//empty hold
-	wld.events = wld.events[:0]
+	wld.events.Clear()
 
 	return nil
 }
 
 func (wld World) getPriorityList() []systemWithPriority {
-	result := make([]systemWithPriority, len(wld.systems))
+	result := make([]systemWithPriority, wld.systems.Size())
 
-	for i, v := range wld.systems {
-		result[i] = v
+	i := 0
+	for it := wld.systems.Iterator(); it.HasNext(); {
+		result[i] = it.Value().(systemWithPriority)
+		i++
 	}
 
 	sort.Slice(result, func(i, j int) bool {
@@ -138,7 +159,7 @@ func (wld *World) Update(delta float32) error {
 // Notify add an event to be sent
 func (wld *World) Notify(event interface{}) error {
 	// add the event
-	wld.events = append(wld.events, event)
+	wld.events.Add(event)
 
 	return nil
 }
@@ -147,7 +168,7 @@ func (wld *World) Notify(event interface{}) error {
 func New() *World {
 	return &World{
 		View:    view.New(),
-		systems: make([]systemWithPriority, 0),
-		events:  make([]interface{}, 0),
+		systems: sparse.NewSlice(systemsInitialCapacity, systemsCapacityGrow),
+		events:  sparse.NewSlice(eventsInitialCapacity, eventsCapacityGrow),
 	}
 }

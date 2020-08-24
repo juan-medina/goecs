@@ -25,6 +25,7 @@ package world
 import (
 	"errors"
 	"github.com/juan-medina/goecs/pkg/entity"
+	"github.com/juan-medina/goecs/pkg/sparse"
 	"reflect"
 	"testing"
 )
@@ -50,8 +51,10 @@ type HMovementSystem struct{}
 func (m *HMovementSystem) Notify(world *World, e interface{}, _ float32) error {
 	switch e.(type) {
 	case resetEvent:
-		for _, v := range world.Entities(PosType, VelType) {
+		for it := world.Iterator(PosType, VelType); it.HasNext(); {
+			v := it.Value()
 			pos := v.Get(PosType).(Pos)
+
 			pos.x = 0
 			v.Set(pos)
 		}
@@ -60,14 +63,15 @@ func (m *HMovementSystem) Notify(world *World, e interface{}, _ float32) error {
 }
 
 func (m *HMovementSystem) Update(world *World, _ float32) error {
-	for _, v := range world.Entities(PosType, VelType) {
+	for it := world.Iterator(PosType, VelType); it.HasNext(); {
+		v := it.Value()
 		pos := v.Get(PosType).(Pos)
 		vel := v.Get(VelType).(Vel)
 
 		pos.x += vel.x
-
 		v.Set(pos)
 	}
+
 	return nil
 }
 
@@ -76,8 +80,10 @@ type VMovementSystem struct{}
 func (m *VMovementSystem) Notify(world *World, e interface{}, _ float32) error {
 	switch e.(type) {
 	case resetEvent:
-		for _, v := range world.Entities(PosType, VelType) {
+		for it := world.Iterator(PosType, VelType); it.HasNext(); {
+			v := it.Value()
 			pos := v.Get(PosType).(Pos)
+
 			pos.y = 0
 			v.Set(pos)
 		}
@@ -85,12 +91,12 @@ func (m *VMovementSystem) Notify(world *World, e interface{}, _ float32) error {
 	return nil
 }
 func (m *VMovementSystem) Update(world *World, _ float32) error {
-	for _, v := range world.Entities(PosType, VelType) {
+	for it := world.Iterator(PosType, VelType); it.HasNext(); {
+		v := it.Value()
 		pos := v.Get(PosType).(Pos)
 		vel := v.Get(VelType).(Vel)
 
 		pos.y += vel.y
-
 		v.Set(pos)
 	}
 	return nil
@@ -193,9 +199,9 @@ func TestWorld_UpdateGroup(t *testing.T) {
 
 func expectPositions(t *testing.T, world *World, want []Pos) {
 	t.Helper()
-	entities := world.Entities(PosType)
 	got := make([]Pos, 0)
-	for _, v := range entities {
+	for it := world.Iterator(PosType); it.HasNext(); {
+		v := it.Value()
 		got = append(got, v.Get(PosType).(Pos))
 	}
 
@@ -399,5 +405,38 @@ func TestWorld_AddSystemWithPriority(t *testing.T) {
 				t.Fatalf("got %v, want %v", systemCalls, tc.expect)
 			}
 		})
+	}
+}
+
+func TestWorld_DeleteSystem(t *testing.T) {
+	world := New()
+	hms := &HMovementSystem{}
+	vms := &VMovementSystem{}
+
+	world.AddSystem(hms)
+	world.AddSystem(vms)
+
+	err := world.RemoveSystem(vms)
+
+	if err != nil {
+		t.Fatalf("expect not error got %v", err)
+	}
+
+	world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+	world.Add(entity.New().Add(Pos{x: 2, y: 2}))
+	world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+
+	_ = world.Update(0)
+
+	expectPositions(t, world, []Pos{
+		{x: 1, y: 0},
+		{x: 2, y: 2},
+		{x: 7, y: 3},
+	})
+
+	err = world.RemoveSystem(vms)
+
+	if !errors.Is(err, sparse.ErrItemNotFound) {
+		t.Fatalf("shoudl get ErrItemNotFound but got %v", err)
 	}
 }

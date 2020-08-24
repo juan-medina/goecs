@@ -1,0 +1,173 @@
+/*
+ * Copyright (c) 2020 Juan Medina.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
+
+// Package sparse provides the creation of sparse.Slice via sparse.NewSlice
+package sparse
+
+import "errors"
+
+var (
+	// ErrItemNotFound is the error when we could not find an item
+	ErrItemNotFound = errors.New("item not found")
+)
+
+// Iterator for sparse
+type Iterator interface {
+	// HasNext returns true if we have more items
+	HasNext() bool
+	// Value returns the current item value
+	Value() interface{}
+}
+
+// Slice is an slice that contains interfaces and reuse slots
+type Slice interface {
+	// Add a new item to the slice
+	Add(ref interface{})
+	// Remove a item in the slice
+	Remove(ref interface{}) error
+	// Clear al the items in the slice
+	Clear()
+	// Size return the number of items in this slice
+	Size() int
+	// Iterator returns a new sparse.Iterator for sparse.Slice
+	Iterator() Iterator
+}
+
+type item struct {
+	ref   interface{}
+	valid bool
+}
+
+type slice struct {
+	capacity int
+	grow     int
+	items    []item
+	size     int
+}
+
+type sliceIterator struct {
+	data    slice
+	current int
+}
+
+func (si *sliceIterator) HasNext() bool {
+	size := len(si.data.items)
+	for i := si.current + 1; i < size; i++ {
+		item := si.data.items[i]
+		if item.valid {
+			si.current = i
+			return true
+		}
+	}
+	return false
+}
+
+func (si *sliceIterator) Value() interface{} {
+	return si.data.items[si.current].ref
+}
+
+func (ss *slice) Add(ref interface{}) {
+	for i, si := range ss.items {
+		if !si.valid {
+			ss.items[i].ref = ref
+			ss.items[i].valid = true
+			ss.size++
+			return
+		}
+	}
+
+	ss.growCapacity()
+	ni := ss.capacity - 1
+	ss.items[ni].ref = ref
+	ss.items[ni].valid = true
+}
+
+func (ss *slice) Remove(ref interface{}) error {
+	if i, err := ss.find(ref); err == nil {
+		ss.items[i].valid = false
+		ss.items[i].ref = nil
+		ss.size--
+	} else {
+		return err
+	}
+	return nil
+}
+
+func (ss *slice) Clear() {
+	for i := 0; i < ss.capacity; i++ {
+		ss.items[i].valid = false
+		ss.items[i].ref = nil
+	}
+	ss.size = 0
+}
+
+func (ss slice) Size() int {
+	return ss.size
+}
+
+func (ss slice) Iterator() Iterator {
+	return &sliceIterator{
+		data:    ss,
+		current: -1,
+	}
+}
+
+func (ss *slice) initialize() {
+	ss.items = make([]item, ss.capacity)
+	for i := 0; i < ss.capacity; i++ {
+		ss.items[i].valid = false
+		ss.items[i].ref = nil
+	}
+}
+
+func (ss *slice) growCapacity() {
+	ss.capacity += ss.grow
+	newItems := make([]item, ss.capacity)
+	for i, si := range ss.items {
+		newItems[i] = si
+	}
+	ss.items = newItems
+}
+
+func (ss slice) find(ref interface{}) (int, error) {
+	for i, si := range ss.items {
+		if si.valid {
+			if si.ref == ref {
+				return i, nil
+			}
+		}
+	}
+	return 0, ErrItemNotFound
+}
+
+// NewSlice creates a new sparse.Slice with the given capacity and grow
+func NewSlice(capacity int, grow int) Slice {
+	slice := slice{
+		capacity: capacity,
+		grow:     grow,
+		size:     0,
+	}
+
+	slice.initialize()
+
+	return &slice
+}

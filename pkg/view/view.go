@@ -26,12 +26,26 @@ package view
 import (
 	"fmt"
 	"github.com/juan-medina/goecs/pkg/entity"
+	"github.com/juan-medina/goecs/pkg/sparse"
 	"reflect"
 )
 
+const (
+	entitiesCapacity = 2000
+	entitiesGrow     = entitiesCapacity / 4
+)
+
+// Iterator for view
+type Iterator interface {
+	// HasNext returns true if we have more items
+	HasNext() bool
+	// Value returns the current item value
+	Value() *entity.Entity
+}
+
 // View represent a set of entity.Entity objects
 type View struct {
-	entities []*entity.Entity
+	entities sparse.Slice
 }
 
 // String get a string representation of a View
@@ -41,89 +55,50 @@ func (vw View) String() string {
 
 // Add a entity.Entity instance to a View
 func (vw *View) Add(ent *entity.Entity) *entity.Entity {
-	vw.entities = append(vw.entities, ent)
+	vw.entities.Add(ent)
 	return ent
 }
 
 // Remove a entity.Entity from a View
-func (vw *View) Remove(ent *entity.Entity) {
-	i := 0
-	for _, v := range vw.entities {
-		if v != ent {
-			vw.entities[i] = v
-			i++
-		}
-	}
-
-	// Prevent memory leak by erasing truncated values
-	for j := i; j < len(vw.entities); j++ {
-		vw.entities[j] = nil
-	}
-
-	vw.entities = vw.entities[:i]
+func (vw *View) Remove(ent *entity.Entity) error {
+	return vw.entities.Remove(ent)
 }
 
 // Size of entity.Entity in the View
 func (vw View) Size() int {
-	return len(vw.entities)
+	return vw.entities.Size()
 }
 
-// Entities return slice of entity.Entity for the given varg reflect.Type
-func (vw View) Entities(rtypes ...reflect.Type) []*entity.Entity {
-	result := make([]*entity.Entity, len(vw.entities))
+type viewIterator struct {
+	eit    sparse.Iterator
+	filter []reflect.Type
+}
 
-	count := 0
-	for _, v := range vw.entities {
-		if v.Contains(rtypes...) {
-			result[count] = v
-			count++
+func (vi *viewIterator) HasNext() bool {
+	for vi.eit.HasNext() {
+		val := vi.Value()
+		if val.Contains(vi.filter...) {
+			return true
 		}
 	}
-	result = result[:count]
-	return result
+	return false
 }
 
-// Entity return the first entity.Entity for the given varg reflect.Type in the View, nil
-// if they are none
-func (vw View) Entity(rtypes ...reflect.Type) *entity.Entity {
-	if entities := vw.Entities(rtypes...); len(entities) != 0 {
-		return entities[0]
+func (vi *viewIterator) Value() *entity.Entity {
+	return vi.eit.Value().(*entity.Entity)
+}
+
+// Iterator return an view.Iterator for the given varg reflect.Type
+func (vw *View) Iterator(rtypes ...reflect.Type) Iterator {
+	return &viewIterator{
+		eit:    vw.entities.Iterator(),
+		filter: rtypes,
 	}
-	return nil
-}
-
-// SubView generate a new View from the given varg reflect.Type
-func (vw View) SubView(rtypes ...reflect.Type) *View {
-	return fromEntities(vw.Entities(rtypes...))
-}
-
-// Filter return a set of entity.Entity trough a filter function
-func (vw View) Filter(filter func(*entity.Entity) bool) []*entity.Entity {
-	result := make([]*entity.Entity, len(vw.entities))
-
-	count := 0
-	for _, v := range vw.entities {
-		if filter(v) {
-			result[count] = v
-			count++
-		}
-	}
-	result = result[:count]
-	return result
 }
 
 // New creates a new empty View
 func New() *View {
 	return &View{
-		entities: make([]*entity.Entity, 0),
+		entities: sparse.NewSlice(entitiesCapacity, entitiesGrow),
 	}
-}
-
-// fromEntities creates a View with the given slice of entity.Entity
-func fromEntities(entities []*entity.Entity) *View {
-	view := New()
-
-	view.entities = entities
-
-	return view
 }
