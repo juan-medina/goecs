@@ -96,6 +96,11 @@ func (vw *View) Iterator(rtypes ...reflect.Type) Iterator {
 	}
 }
 
+// Clear removes all entity.Entity from the view.View
+func (vw *View) Clear() {
+	vw.entities.Clear()
+}
+
 // New creates a new empty View
 func New() *View {
 	return &View{

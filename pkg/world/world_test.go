@@ -440,3 +440,32 @@ func TestWorld_DeleteSystem(t *testing.T) {
 		t.Fatalf("shoudl get ErrItemNotFound but got %v", err)
 	}
 }
+
+func TestWorld_Clear(t *testing.T) {
+	wld := New()
+
+	wld.AddSystem(&HMovementSystem{})
+	wld.AddSystem(&VMovementSystem{})
+
+	wld.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+	wld.Add(entity.New().Add(Pos{x: 2, y: 2}))
+	wld.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+
+	wld.Clear()
+
+	got := wld.systems.Size()
+
+	expect := 0
+
+	if got != expect {
+		t.Fatalf("error on world clear got %d system, want %d systems", got, expect)
+	}
+
+	got = wld.Size()
+
+	expect = 0
+
+	if got != expect {
+		t.Fatalf("error on world clear got %d entities, want %d entities", got, expect)
+	}
+}

@@ -164,6 +164,12 @@ func (wld *World) Notify(event interface{}) error {
 	return nil
 }
 
+// Clear removes all world.System and entity.Entity from the world.World
+func (wld *World) Clear() {
+	wld.systems.Clear()
+	wld.View.Clear()
+}
+
 // New creates a new World
 func New() *World {
 	return &World{
