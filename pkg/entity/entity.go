@@ -45,7 +45,7 @@ func (ent Entity) ID() int64 {
 
 // String : get a string representation of an Entity
 func (ent Entity) String() string {
-	var result = fmt.Sprintf("id{%d} ", ent.id)
+	var result = fmt.Sprintf("id{%d}", ent.id)
 
 	for _, v := range ent.components {
 		if result != "" {

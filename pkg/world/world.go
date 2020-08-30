@@ -60,14 +60,19 @@ type World struct {
 func (wld World) String() string {
 	result := ""
 
-	result += fmt.Sprintf("World[view: %v, systems: [", wld.View)
+	result += fmt.Sprintf("World{view: %v, systems: [", wld.View)
 
+	str := ""
 	for it := wld.systems.Iterator(); it.HasNext(); {
 		s := it.Value().(systemWithPriority)
-		result += fmt.Sprintf("%s,", reflect.TypeOf(s.system).String())
+		if str != "" {
+			str += ","
+		}
+		str += fmt.Sprintf("{%s}", reflect.TypeOf(s.system).String())
 	}
+	str += "]"
 
-	result += "]"
+	result += str + "}"
 
 	return result
 }

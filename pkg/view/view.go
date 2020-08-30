@@ -50,7 +50,16 @@ type View struct {
 
 // String get a string representation of a View
 func (vw View) String() string {
-	return fmt.Sprintf("View{entities: %v}", vw.entities)
+	str := ""
+	for it := vw.Iterator(); it.HasNext(); {
+		if str != "" {
+			str += ","
+		}
+		ent := it.Value()
+		str += ent.String()
+	}
+
+	return fmt.Sprintf("View{entities: [%v]}", str)
 }
 
 // Add a entity.Entity instance to a View
