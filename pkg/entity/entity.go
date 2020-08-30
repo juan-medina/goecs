@@ -101,3 +101,17 @@ func (ent Entity) Contains(rtypes ...reflect.Type) bool {
 
 	return contains
 }
+
+// NotContains check that the Entity has not the given varg reflect.Type
+func (ent Entity) NotContains(rtypes ...reflect.Type) bool {
+	var noContains = true
+
+	for _, t := range rtypes {
+		if _, ok := ent.components[t]; ok {
+			noContains = false
+			break
+		}
+	}
+
+	return noContains
+}

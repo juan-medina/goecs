@@ -170,9 +170,75 @@ func TestEntity_Contains(t *testing.T) {
 		}
 	})
 
-	t.Run("\"expect to not Contains vel", func(t *testing.T) {
+	t.Run("expect to not Contains vel", func(t *testing.T) {
 		if ent2.Contains(VelType) {
 			t.Fatalf("error, its Contains it")
+		}
+	})
+}
+
+func TestEntity_NoContains(t *testing.T) {
+	ent1 := New().Add(Pos{
+		x: 1,
+		y: 1,
+	}).Add(Vel{
+		x: 2,
+		y: 2,
+	})
+
+	ent2 := New().Add(Pos{
+		x: 1,
+		y: 1,
+	})
+
+	var want bool
+	var got bool
+
+	t.Run("expect ent1 to contains pos and vel", func(t *testing.T) {
+		got = ent1.NotContains(PosType, VelType)
+		want = false
+		if got != want {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("expect ent2 to not Contains pos and vel", func(t *testing.T) {
+		got := ent2.NotContains(PosType, VelType)
+		want = false
+		if got != want {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("expect ent1 to Contains pos", func(t *testing.T) {
+		got := ent1.NotContains(PosType)
+		want = false
+		if got != want {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("expect ent1 to Contains vel", func(t *testing.T) {
+		got := ent1.NotContains(VelType)
+		want = false
+		if got != want {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("expect ent12 to Contains pos", func(t *testing.T) {
+		got := ent2.NotContains(PosType)
+		want = false
+		if got != want {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("expect ent2 to not Contains vel", func(t *testing.T) {
+		got := ent2.NotContains(VelType)
+		want = true
+		if got != want {
+			t.Fatalf("got %v, want %v", got, want)
 		}
 	})
 }
