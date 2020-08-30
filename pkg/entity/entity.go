@@ -88,6 +88,11 @@ func (ent Entity) Get(rtype reflect.Type) interface{} {
 	return ent.components[rtype]
 }
 
+// Remove the component of the given reflect.Type
+func (ent *Entity) Remove(typ reflect.Type) {
+	delete(ent.components, typ)
+}
+
 // Contains check that the Entity has the given varg reflect.Type
 func (ent Entity) Contains(rtypes ...reflect.Type) bool {
 	var contains = true

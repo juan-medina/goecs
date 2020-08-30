@@ -284,3 +284,40 @@ func TestEntity_Id(t *testing.T) {
 		t.Fatalf("expect ent1 to have bigger id than ent 2, ent1 %v ent2 %v", ent1, ent2)
 	}
 }
+
+func TestEntity_Remove(t *testing.T) {
+	ent := New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1})
+
+	var got bool
+	var want bool
+
+	t.Run("expect ent to not Contains pol", func(t *testing.T) {
+		ent.Remove(PosType)
+		got = ent.NotContains(PosType)
+		want = true
+		if got != want {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("expect ent to Contains vel", func(t *testing.T) {
+		got = ent.Contains(VelType)
+		want = true
+		if got != want {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("expect ent to not Contains vel", func(t *testing.T) {
+		ent.Remove(VelType)
+		got = ent.NotContains(PosType)
+		want = true
+		if got != want {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("expect not to fail", func(t *testing.T) {
+		ent.Remove(VelType)
+	})
+}
