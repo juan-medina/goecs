@@ -141,6 +141,7 @@ func (wld *World) sendEvents(delta float32) error {
 	i := 0
 	for it := wld.events.Iterator(); it != nil; it = it.Next() {
 		events[i] = it.Value()
+		i++
 	}
 
 	// clear the hold

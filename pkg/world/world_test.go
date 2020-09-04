@@ -234,7 +234,7 @@ func TestWorld_Update_Error(t *testing.T) {
 	})
 }
 
-func TestWorld_Notify(t *testing.T) {
+func TestWorld_Signal(t *testing.T) {
 	world := New()
 	world.AddSystem(HMovementSystem)
 	world.AddSystem(VMovementSystem)
@@ -271,41 +271,35 @@ func TestWorld_Notify(t *testing.T) {
 	})
 }
 
-func TestWorld_Signal(t *testing.T) {
-	world := New()
-	world.AddSystem(HMovementSystem)
-	world.AddSystem(VMovementSystem)
-	world.Listen(ResetHListener)
-	world.Listen(ResetVListener)
+func TestWorld_SignalMultiple(t *testing.T) {
+	wld := New()
 
-	world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-	world.Add(entity.New().Add(Pos{x: 2, y: 2}))
-	world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+	type nunEvent struct {
+		num int
+	}
 
-	_ = world.Update(0)
-
-	expectPositions(t, world, []Pos{
-		{x: 1, y: 1},
-		{x: 2, y: 2},
-		{x: 7, y: 7},
+	sum := 0
+	wld.Listen(func(wld *World, e interface{}, _ float32) error {
+		switch n := e.(type) {
+		case nunEvent:
+			sum += n.num
+		}
+		return nil
 	})
 
-	_ = world.Signal(resetEvent{})
-	_ = world.Update(0)
+	_ = wld.Signal(nunEvent{num: 1})
+	_ = wld.Signal(nunEvent{num: 2})
+	_ = wld.Signal(nunEvent{num: 3})
+	_ = wld.Signal(nunEvent{num: 4})
 
-	expectPositions(t, world, []Pos{
-		{x: 0, y: 0},
-		{x: 2, y: 2},
-		{x: 0, y: 0},
-	})
+	_ = wld.Update(0)
 
-	_ = world.Update(0)
+	got := sum
+	expect := 10
 
-	expectPositions(t, world, []Pos{
-		{x: 1, y: 1},
-		{x: 2, y: 2},
-		{x: 4, y: 4},
-	})
+	if got != expect {
+		t.Fatalf("error on testing multiple signals got %d , want %d", got, expect)
+	}
 }
 
 func TestWorld_Signal_Error(t *testing.T) {
