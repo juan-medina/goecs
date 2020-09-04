@@ -35,7 +35,7 @@ func Example() {
 	wld := world.New()
 
 	// ad our movement system
-	wld.AddSystem(&MovementSystem{})
+	wld.AddSystem(MovementSystem)
 
 	// add a first entity
 	wld.Add(entity.New(
@@ -62,11 +62,8 @@ func Example() {
 }
 
 // MovementSystem is a simple movement system
-type MovementSystem struct{}
-
-// Update the ECS world.World
-func (m *MovementSystem) Update(wld *world.World, delta float32) error {
-	for it := wld.Iterator(PosType, VelType); it.HasNext(); {
+func MovementSystem(wld *world.World, delta float32) error {
+	for it := wld.Iterator(PosType, VelType); it != nil; it = it.Next() {
 		ent := it.Value()
 		pos := ent.Get(PosType).(Pos)
 		vel := ent.Get(VelType).(Vel)
@@ -77,11 +74,6 @@ func (m *MovementSystem) Update(wld *world.World, delta float32) error {
 		ent.Set(pos)
 	}
 
-	return nil
-}
-
-// Notify get call when events trigger
-func (m *MovementSystem) Notify(world *world.World, event interface{}, delta float32) error {
 	return nil
 }
 

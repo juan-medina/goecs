@@ -32,8 +32,8 @@ var (
 
 // Iterator for sparse
 type Iterator interface {
-	// HasNext returns true if we have more items
-	HasNext() bool
+	// Next returns the next element
+	Next() Iterator
 	// Value returns the current item value
 	Value() interface{}
 }
@@ -69,16 +69,15 @@ type sliceIterator struct {
 	current int
 }
 
-func (si *sliceIterator) HasNext() bool {
-	size := len(si.data.items)
-	for i := si.current + 1; i < size; i++ {
+func (si *sliceIterator) Next() Iterator {
+	for i := si.current + 1; i < len(si.data.items); i++ {
 		item := si.data.items[i]
 		if item.valid {
 			si.current = i
-			return true
+			return si
 		}
 	}
-	return false
+	return nil
 }
 
 func (si *sliceIterator) Value() interface{} {
@@ -125,10 +124,11 @@ func (ss slice) Size() int {
 }
 
 func (ss slice) Iterator() Iterator {
-	return &sliceIterator{
+	it := sliceIterator{
 		data:    ss,
 		current: -1,
 	}
+	return it.Next()
 }
 
 func (ss *slice) initialize() {

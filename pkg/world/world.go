@@ -28,6 +28,7 @@ import (
 	"github.com/juan-medina/goecs/pkg/sparse"
 	"github.com/juan-medina/goecs/pkg/view"
 	"reflect"
+	"runtime"
 	"sort"
 )
 
@@ -37,23 +38,33 @@ type systemWithPriority struct {
 	id       int64
 }
 
+type listenerWithPriority struct {
+	listener Listener
+	priority int32
+	id       int64
+}
+
 const (
-	defaultPriority        = int32(0)
-	eventsInitialCapacity  = 10
-	eventsCapacityGrow     = eventsInitialCapacity / 4
-	systemsInitialCapacity = 100
-	systemsCapacityGrow    = systemsInitialCapacity / 4
+	defaultPriority          = int32(0)
+	eventsInitialCapacity    = 100
+	eventsCapacityGrow       = eventsInitialCapacity / 4
+	systemsInitialCapacity   = 100
+	systemsCapacityGrow      = systemsInitialCapacity / 4
+	listenersInitialCapacity = 100
+	listenersCapacityGrow    = systemsInitialCapacity / 4
 )
 
 var (
-	lastID = int64(0)
+	lastSystemID   = int64(0)
+	lastListenerID = int64(0)
 )
 
 // World is a view.View that contains the entity.Entity and System of our ECS
 type World struct {
 	*view.View
-	systems sparse.Slice
-	events  sparse.Slice
+	systems   sparse.Slice
+	listeners sparse.Slice
+	events    sparse.Slice
 }
 
 // String get a string representation of our World
@@ -63,12 +74,26 @@ func (wld World) String() string {
 	result += fmt.Sprintf("World{view: %v, systems: [", wld.View)
 
 	str := ""
-	for it := wld.systems.Iterator(); it.HasNext(); {
+	for it := wld.systems.Iterator(); it != nil; it = it.Next() {
 		s := it.Value().(systemWithPriority)
 		if str != "" {
 			str += ","
 		}
-		str += fmt.Sprintf("{%s}", reflect.TypeOf(s.system).String())
+		name := runtime.FuncForPC(reflect.ValueOf(s.system).Pointer()).Name()
+		str += fmt.Sprintf("{%s}", name)
+	}
+	str += "]"
+
+	result += str + " listeners: ["
+
+	str = ""
+	for it := wld.listeners.Iterator(); it != nil; it = it.Next() {
+		l := it.Value().(listenerWithPriority)
+		if str != "" {
+			str += ","
+		}
+		name := runtime.FuncForPC(reflect.ValueOf(l.listener).Pointer()).Name()
+		str += fmt.Sprintf("{%s}", name)
 	}
 	str += "]"
 
@@ -82,54 +107,88 @@ func (wld *World) AddSystem(sys System) {
 	wld.AddSystemWithPriority(sys, defaultPriority)
 }
 
-// RemoveSystem deletes the given System from the world
-func (wld *World) RemoveSystem(sys System) error {
-	for it := wld.systems.Iterator(); it.HasNext(); {
-		s := it.Value().(systemWithPriority)
-		if s.system == sys {
-			return wld.systems.Remove(s)
-		}
-	}
-
-	return sparse.ErrItemNotFound
-}
-
 // AddSystemWithPriority adds the given System to the world
 func (wld *World) AddSystemWithPriority(sys System, priority int32) {
 	wld.systems.Add(systemWithPriority{
 		system:   sys,
 		priority: priority,
-		id:       lastID,
+		id:       lastSystemID,
 	})
-	lastID++
+	lastSystemID++
+}
+
+// Listen adds the given System to the world
+func (wld *World) Listen(lis Listener) {
+	wld.ListenWithPriority(lis, defaultPriority)
+}
+
+// ListenWithPriority adds the given System to the world
+func (wld *World) ListenWithPriority(lis Listener, priority int32) {
+	wld.listeners.Add(listenerWithPriority{
+		listener: lis,
+		priority: priority,
+		id:       lastListenerID,
+	})
+	lastListenerID++
 }
 
 // sendEvents send the pending events to the System on the world
-func (wld *World) sendEvents(delta float32, systems []systemWithPriority) error {
+func (wld *World) sendEvents(delta float32) error {
+	// for hold a copy of the events
+	events := make([]interface{}, wld.events.Size())
+
 	// get all events for this hold
-	for it := wld.events.Iterator(); it.HasNext(); {
-		e := it.Value()
+	i := 0
+	for it := wld.events.Iterator(); it != nil; it = it.Next() {
+		events[i] = it.Value()
+	}
+
+	// clear the hold
+	wld.events.Clear()
+
+	// get the listener list
+	listeners := wld.getListenersPriorityList()
+
+	for _, e := range events {
 		// range systems
-		for _, s := range systems {
+		for _, l := range listeners {
 			// notify the event to the system
-			if err := s.system.Notify(wld, e, delta); err != nil {
+			if err := l.listener(wld, e, delta); err != nil {
 				return err
 			}
 		}
 	}
 
-	//empty hold
-	wld.events.Clear()
-
 	return nil
 }
 
-func (wld World) getPriorityList() []systemWithPriority {
+func (wld World) getSystemsPriorityList() []systemWithPriority {
 	result := make([]systemWithPriority, wld.systems.Size())
 
 	i := 0
-	for it := wld.systems.Iterator(); it.HasNext(); {
+	for it := wld.systems.Iterator(); it != nil; it = it.Next() {
 		result[i] = it.Value().(systemWithPriority)
+		i++
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		first := result[i]
+		second := result[j]
+		if first.priority == second.priority {
+			return first.id < second.id
+		}
+		return first.priority > second.priority
+	})
+
+	return result
+}
+
+func (wld World) getListenersPriorityList() []listenerWithPriority {
+	result := make([]listenerWithPriority, wld.listeners.Size())
+
+	i := 0
+	for it := wld.listeners.Iterator(); it != nil; it = it.Next() {
+		result[i] = it.Value().(listenerWithPriority)
 		i++
 	}
 
@@ -147,22 +206,22 @@ func (wld World) getPriorityList() []systemWithPriority {
 
 // Update ask to update the System send the pending events
 func (wld *World) Update(delta float32) error {
-	pl := wld.getPriorityList()
+	pl := wld.getSystemsPriorityList()
 	for _, s := range pl {
-		if err := s.system.Update(wld, delta); err != nil {
+		if err := s.system(wld, delta); err != nil {
 			return err
 		}
 	}
 
-	if err := wld.sendEvents(delta, pl); err != nil {
+	if err := wld.sendEvents(delta); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// Notify add an event to be sent
-func (wld *World) Notify(event interface{}) error {
+// Signal signal an event to be sent
+func (wld *World) Signal(event interface{}) error {
 	// add the event
 	wld.events.Add(event)
 
@@ -178,8 +237,9 @@ func (wld *World) Clear() {
 // New creates a new World
 func New() *World {
 	return &World{
-		View:    view.New(),
-		systems: sparse.NewSlice(systemsInitialCapacity, systemsCapacityGrow),
-		events:  sparse.NewSlice(eventsInitialCapacity, eventsCapacityGrow),
+		View:      view.New(),
+		systems:   sparse.NewSlice(systemsInitialCapacity, systemsCapacityGrow),
+		listeners: sparse.NewSlice(listenersInitialCapacity, listenersCapacityGrow),
+		events:    sparse.NewSlice(eventsInitialCapacity, eventsCapacityGrow),
 	}
 }

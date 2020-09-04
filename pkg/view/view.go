@@ -37,8 +37,8 @@ const (
 
 // Iterator for view
 type Iterator interface {
-	// HasNext returns true if we have more items
-	HasNext() bool
+	// Next returns next element
+	Next() Iterator
 	// Value returns the current item value
 	Value() *entity.Entity
 }
@@ -51,7 +51,7 @@ type View struct {
 // String get a string representation of a View
 func (vw View) String() string {
 	str := ""
-	for it := vw.Iterator(); it.HasNext(); {
+	for it := vw.Iterator(); it != nil; it = it.Next() {
 		if str != "" {
 			str += ","
 		}
@@ -79,18 +79,30 @@ func (vw View) Size() int {
 }
 
 type viewIterator struct {
+	view   *View
 	eit    sparse.Iterator
 	filter []reflect.Type
 }
 
-func (vi *viewIterator) HasNext() bool {
-	for vi.eit.HasNext() {
+func (vi *viewIterator) Next() Iterator {
+	for vi.eit = vi.eit.Next(); vi.eit != nil; vi.eit = vi.eit.Next() {
 		val := vi.Value()
 		if val.Contains(vi.filter...) {
-			return true
+			return vi
 		}
 	}
-	return false
+	return nil
+}
+
+func (vi *viewIterator) first() Iterator {
+	for it := vi.view.entities.Iterator(); it != nil; it = it.Next() {
+		val := it.Value().(*entity.Entity)
+		if val.Contains(vi.filter...) {
+			vi.eit = it
+			return vi
+		}
+	}
+	return nil
 }
 
 func (vi *viewIterator) Value() *entity.Entity {
@@ -99,10 +111,12 @@ func (vi *viewIterator) Value() *entity.Entity {
 
 // Iterator return an view.Iterator for the given varg reflect.Type
 func (vw *View) Iterator(rtypes ...reflect.Type) Iterator {
-	return &viewIterator{
-		eit:    vw.entities.Iterator(),
+	it := viewIterator{
+		view:   vw,
+		eit:    nil,
 		filter: rtypes,
 	}
+	return it.first()
 }
 
 // Clear removes all entity.Entity from the view.View

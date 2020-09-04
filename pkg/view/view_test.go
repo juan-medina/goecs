@@ -165,7 +165,7 @@ func TestView_Iterator(t *testing.T) {
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			result := make([]*entity.Entity, 0)
-			for it := view.Iterator(tt.params...); it.HasNext(); {
+			for it := view.Iterator(tt.params...); it != nil; it = it.Next() {
 				value := it.Value()
 				result = append(result, value)
 			}

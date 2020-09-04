@@ -23,7 +23,7 @@ For a more in deep read on this topic I could recommend this [article](https://m
 
 ## Example
 
-[Run it on the Go Playground](https://play.golang.org/p/omdnHDDj7E3)
+[Run it on the Go Playground](https://play.golang.org/p/vv5XWvIfmHY)
 ```go
 package main
 
@@ -34,12 +34,13 @@ import (
 	"reflect"
 )
 
+// Simple Usage
 func main() {
 	// creates the world
 	wld := world.New()
 
 	// ad our movement system
-	wld.AddSystem(&MovementSystem{})
+	wld.AddSystem(MovementSystem)
 
 	// add a first entity
 	wld.Add(entity.New(
@@ -66,11 +67,8 @@ func main() {
 }
 
 // MovementSystem is a simple movement system
-type MovementSystem struct{}
-
-// Update the ECS world.World
-func (m *MovementSystem) Update(wld *world.World, delta float32) error {
-	for it := wld.Iterator(PosType, VelType); it.HasNext(); {
+func MovementSystem(wld *world.World, delta float32) error {
+	for it := wld.Iterator(PosType, VelType); it != nil; it = it.Next() {
 		ent := it.Value()
 		pos := ent.Get(PosType).(Pos)
 		vel := ent.Get(VelType).(Vel)
@@ -81,11 +79,6 @@ func (m *MovementSystem) Update(wld *world.World, delta float32) error {
 		ent.Set(pos)
 	}
 
-	return nil
-}
-
-// Notify get call when events trigger
-func (m *MovementSystem) Notify(world *world.World, event interface{}, delta float32) error {
 	return nil
 }
 
@@ -106,10 +99,11 @@ type Vel struct {
 
 // VelType is the reflect.Type of Vel
 var VelType = reflect.TypeOf(Vel{})
+
 ```
 This will output:
 
-`world: World{view: View{entities: [Entity{id{0},main.Pos{0.5 0.5},main.Vel{1 1}},Entity{id{1},main.Pos{2 2}},Entity{id{2},main.Pos{3.5 3.5},main.Vel{3 3}}]}, systems: [{*main.MovementSystem}]}`
+`world: World{view: View{entities: [Entity{id{0},main.Pos{0.5 0.5},main.Vel{1 1}},Entity{id{1},main.Pos{2 2}},Entity{id{2},main.Pos{3.5 3.5},main.Vel{3 3}}]}, systems: [{main.MovementSystem}] listeners: []}`
 
 ## Installation
 

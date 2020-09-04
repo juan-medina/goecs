@@ -191,7 +191,7 @@ func TestSlice_Iterator(t *testing.T) {
 
 	got := make([]int, 0)
 
-	for it := sl.Iterator(); it.HasNext(); {
+	for it := sl.Iterator(); it != nil; it = it.Next() {
 		got = append(got, it.Value().(int))
 	}
 
@@ -205,7 +205,7 @@ func TestSlice_Iterator(t *testing.T) {
 
 	got = make([]int, 0)
 
-	for it := sl.Iterator(); it.HasNext(); {
+	for it := sl.Iterator(); it != nil; it = it.Next() {
 		got = append(got, it.Value().(int))
 	}
 
@@ -220,7 +220,7 @@ func TestSlice_Iterator(t *testing.T) {
 
 	got = make([]int, 0)
 
-	for it := sl.Iterator(); it.HasNext(); {
+	for it := sl.Iterator(); it != nil; it = it.Next() {
 		got = append(got, it.Value().(int))
 	}
 
