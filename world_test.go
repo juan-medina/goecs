@@ -30,11 +30,11 @@ import (
 	"testing"
 )
 
-type resetEvent struct{}
+type resetSignal struct{}
 
 func ResetHListener(world *goecs.World, e interface{}, _ float32) error {
 	switch e.(type) {
-	case resetEvent:
+	case resetSignal:
 		for it := world.Iterator(PosType, VelType); it != nil; it = it.Next() {
 			v := it.Value()
 			pos := v.Get(PosType).(Pos)
@@ -61,7 +61,7 @@ func HMovementSystem(world *goecs.World, _ float32) error {
 
 func ResetVListener(world *goecs.World, e interface{}, _ float32) error {
 	switch e.(type) {
-	case resetEvent:
+	case resetSignal:
 		for it := world.Iterator(PosType, VelType); it != nil; it = it.Next() {
 			v := it.Value()
 			pos := v.Get(PosType).(Pos)
@@ -239,7 +239,7 @@ func TestWorld_Signal(t *testing.T) {
 		{X: 7, Y: 7},
 	})
 
-	_ = world.Signal(resetEvent{})
+	_ = world.Signal(resetSignal{})
 	_ = world.Update(0)
 
 	expectPositions(t, world, []Pos{
@@ -260,23 +260,23 @@ func TestWorld_Signal(t *testing.T) {
 func TestWorld_SignalMultiple(t *testing.T) {
 	world := goecs.New()
 
-	type nunEvent struct {
+	type nunSignal struct {
 		num int
 	}
 
 	sum := 0
 	world.AddListener(func(world *goecs.World, e interface{}, _ float32) error {
 		switch n := e.(type) {
-		case nunEvent:
+		case nunSignal:
 			sum += n.num
 		}
 		return nil
 	})
 
-	_ = world.Signal(nunEvent{num: 1})
-	_ = world.Signal(nunEvent{num: 2})
-	_ = world.Signal(nunEvent{num: 3})
-	_ = world.Signal(nunEvent{num: 4})
+	_ = world.Signal(nunSignal{num: 1})
+	_ = world.Signal(nunSignal{num: 2})
+	_ = world.Signal(nunSignal{num: 3})
+	_ = world.Signal(nunSignal{num: 4})
 
 	_ = world.Update(0)
 
@@ -310,7 +310,7 @@ func TestWorld_Signal_Error(t *testing.T) {
 		{X: 7, Y: 7},
 	})
 
-	e = world.Signal(resetEvent{})
+	e = world.Signal(resetSignal{})
 
 	if e != nil {
 		t.Fatalf("shoudl not get error but got %v", e)
