@@ -20,5 +20,18 @@
  *  THE SOFTWARE.
  */
 
-// Package goecs is our public package
+// Package goecs provides a Go implementation of an Entity–component–system (ECS)
+//
+// Entity–component–system (ECS) is an architectural patter that follows the composition over inheritance principle
+// that allows greater flexibility in defining entities where every object in a world.
+//
+// Every entity consists of one or more components which contains data or state. Therefore, the behavior of an entity
+// can be changed at runtime by systems that add, remove or mutate components.
+//
+// This eliminates the ambiguity problems of deep and wide inheritance hierarchies that are difficult to understand,
+// maintain and extend.
+//
+// Common ECS approaches are highly compatible and often combined with data-oriented design techniques.
+//
+// See: World, Entity
 package goecs

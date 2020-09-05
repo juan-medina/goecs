@@ -20,12 +20,10 @@
  *  THE SOFTWARE.
  */
 
-// Package view allows to get a View of entity.Entity objects
-package view
+package goecs
 
 import (
 	"fmt"
-	"github.com/juan-medina/goecs/entity"
 	"github.com/juan-medina/goecs/sparse"
 	"reflect"
 )
@@ -40,10 +38,10 @@ type Iterator interface {
 	// Next returns next element
 	Next() Iterator
 	// Value returns the current item value
-	Value() *entity.Entity
+	Value() *Entity
 }
 
-// View represent a set of entity.Entity objects
+// View represent a set of Entity objects
 type View struct {
 	entities sparse.Slice
 }
@@ -62,18 +60,19 @@ func (vw View) String() string {
 	return fmt.Sprintf("View{entities: [%v]}", str)
 }
 
-// Add a entity.Entity instance to a View
-func (vw *View) Add(ent *entity.Entity) *entity.Entity {
+// AddEntity a Entity instance to a View given it components
+func (vw *View) AddEntity(components ...interface{}) *Entity {
+	ent := NewEntity(components...)
 	vw.entities.Add(ent)
 	return ent
 }
 
-// Remove a entity.Entity from a View
-func (vw *View) Remove(ent *entity.Entity) error {
+// Remove a Entity from a View
+func (vw *View) Remove(ent *Entity) error {
 	return vw.entities.Remove(ent)
 }
 
-// Size of entity.Entity in the View
+// Size of Entity in the View
 func (vw View) Size() int {
 	return vw.entities.Size()
 }
@@ -96,7 +95,7 @@ func (vi *viewIterator) Next() Iterator {
 
 func (vi *viewIterator) first() Iterator {
 	for it := vi.view.entities.Iterator(); it != nil; it = it.Next() {
-		val := it.Value().(*entity.Entity)
+		val := it.Value().(*Entity)
 		if val.Contains(vi.filter...) {
 			vi.eit = it
 			return vi
@@ -105,8 +104,8 @@ func (vi *viewIterator) first() Iterator {
 	return nil
 }
 
-func (vi *viewIterator) Value() *entity.Entity {
-	return vi.eit.Value().(*entity.Entity)
+func (vi *viewIterator) Value() *Entity {
+	return vi.eit.Value().(*Entity)
 }
 
 // Iterator return an view.Iterator for the given varg reflect.Type
@@ -119,13 +118,13 @@ func (vw *View) Iterator(rtypes ...reflect.Type) Iterator {
 	return it.first()
 }
 
-// Clear removes all entity.Entity from the view.View
+// Clear removes all Entity from the view.View
 func (vw *View) Clear() {
 	vw.entities.Clear()
 }
 
-// New creates a new empty View
-func New() *View {
+// NewView creates a new empty View
+func NewView() *View {
 	return &View{
 		entities: sparse.NewSlice(entitiesCapacity, entitiesGrow),
 	}

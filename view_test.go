@@ -20,27 +20,13 @@
  *  THE SOFTWARE.
  */
 
-package view
+package goecs_test
 
 import (
-	"github.com/juan-medina/goecs/entity"
+	"github.com/juan-medina/goecs"
 	"reflect"
 	"testing"
 )
-
-type Pos struct {
-	x float32
-	y float32
-}
-
-var PosType = reflect.TypeOf(Pos{})
-
-type Vel struct {
-	x float32
-	y float32
-}
-
-var VelType = reflect.TypeOf(Vel{})
 
 type GameObject struct {
 	name string
@@ -48,8 +34,8 @@ type GameObject struct {
 
 var GameObjectType = reflect.TypeOf(GameObject{})
 
-func TestNew(t *testing.T) {
-	view := New()
+func TestNewView(t *testing.T) {
+	view := goecs.NewView()
 	got := view.Size()
 	expect := 0
 
@@ -59,15 +45,12 @@ func TestNew(t *testing.T) {
 }
 
 func TestView_Add(t *testing.T) {
-	view := New()
+	view := goecs.NewView()
 
-	view.Add(entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	}).Add(Vel{
-		x: 2,
-		y: 2,
-	}))
+	view.AddEntity(
+		Pos{X: 1, Y: 1},
+		Vel{X: 2, Y: 2},
+	)
 
 	got := view.Size()
 	expect := 1
@@ -78,23 +61,16 @@ func TestView_Add(t *testing.T) {
 }
 
 func TestView_Size(t *testing.T) {
-	view := New()
-	ent1 := entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	}).Add(Vel{
-		x: 2,
-		y: 2,
-	})
+	view := goecs.NewView()
 
-	view.Add(ent1)
+	view.AddEntity(
+		Pos{X: 1, Y: 1},
+		Vel{X: 2, Y: 2},
+	)
 
-	ent2 := entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	})
-
-	view.Add(ent2)
+	view.AddEntity(
+		Pos{X: 1, Y: 1},
+	)
 
 	got := view.Size()
 	expect := 2
@@ -104,7 +80,7 @@ func TestView_Size(t *testing.T) {
 	}
 }
 
-func entitiesEqual(a, b []*entity.Entity) bool {
+func entitiesEqual(a, b []*goecs.Entity) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -117,54 +93,47 @@ func entitiesEqual(a, b []*entity.Entity) bool {
 }
 
 func TestView_Iterator(t *testing.T) {
-	view := New()
+	view := goecs.NewView()
 
-	ent1 := entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	}).Add(Vel{
-		x: 2,
-		y: 2,
-	})
+	ent1 := view.AddEntity(
+		Pos{X: 1, Y: 1},
+		Vel{X: 2, Y: 2},
+	)
 
-	view.Add(ent1)
+	ent2 := view.AddEntity(
+		Pos{X: 1, Y: 1},
+	)
 
-	ent2 := entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	})
-
-	view.Add(ent2)
 	type testCase struct {
 		name   string
 		params []reflect.Type
-		expect []*entity.Entity
+		expect []*goecs.Entity
 	}
 	var cases = []testCase{
 		{
 			name:   "should get ent1 asking for pos and vel",
 			params: []reflect.Type{PosType, VelType},
-			expect: []*entity.Entity{ent1},
+			expect: []*goecs.Entity{ent1},
 		},
 		{
 			name:   "should get ent1 and ent2 asking only for pos",
 			params: []reflect.Type{PosType},
-			expect: []*entity.Entity{ent1, ent2},
+			expect: []*goecs.Entity{ent1, ent2},
 		},
 		{
 			name:   "should get no entities with non existing component",
 			params: []reflect.Type{GameObjectType},
-			expect: []*entity.Entity{},
+			expect: []*goecs.Entity{},
 		},
 		{
 			name:   "should get ent1 asking for only vel",
 			params: []reflect.Type{VelType},
-			expect: []*entity.Entity{ent1},
+			expect: []*goecs.Entity{ent1},
 		},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			result := make([]*entity.Entity, 0)
+			result := make([]*goecs.Entity, 0)
 			for it := view.Iterator(tt.params...); it != nil; it = it.Next() {
 				value := it.Value()
 				result = append(result, value)
@@ -179,28 +148,21 @@ func TestView_Iterator(t *testing.T) {
 }
 
 func TestView_Remove(t *testing.T) {
-	view := New()
+	view := goecs.NewView()
 
-	ent1 := view.Add(entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	}).Add(Vel{
-		x: 2,
-		y: 2,
-	}))
+	ent1 := view.AddEntity(
+		Pos{X: 1, Y: 1},
+		Vel{X: 2, Y: 2},
+	)
 
-	ent2 := view.Add(entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	}))
+	ent2 := view.AddEntity(
+		Pos{X: 1, Y: 1},
+	)
 
-	view.Add(entity.New().Add(Pos{
-		x: 1,
-		y: 1,
-	}).Add(Vel{
-		x: 2,
-		y: 2,
-	}))
+	view.AddEntity(
+		Pos{X: 1, Y: 1},
+		Vel{X: 2, Y: 2},
+	)
 
 	_ = view.Remove(ent2)
 
@@ -222,11 +184,11 @@ func TestView_Remove(t *testing.T) {
 }
 
 func TestView_String(t *testing.T) {
-	view := New()
+	view := goecs.NewView()
 
-	view.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-	view.Add(entity.New().Add(Pos{x: 2, y: 2}))
-	view.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+	view.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
+	view.AddEntity(Pos{X: 2, Y: 2})
+	view.AddEntity(Pos{X: 3, Y: 3}, Vel{X: 4, Y: 4})
 
 	s := view.String()
 
@@ -236,11 +198,11 @@ func TestView_String(t *testing.T) {
 }
 
 func TestView_Clear(t *testing.T) {
-	view := New()
+	view := goecs.NewView()
 
-	view.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-	view.Add(entity.New().Add(Pos{x: 2, y: 2}))
-	view.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+	view.AddEntity(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
+	view.AddEntity(Pos{X: 2, Y: 2})
+	view.AddEntity(Pos{X: 3, Y: 3}).Add(Vel{X: 4, Y: 4})
 
 	view.Clear()
 

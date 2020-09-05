@@ -20,80 +20,66 @@
  *  THE SOFTWARE.
  */
 
-package world
+package goecs_test
 
 import (
 	"errors"
 	"fmt"
-	"github.com/juan-medina/goecs/entity"
+	"github.com/juan-medina/goecs"
 	"reflect"
 	"testing"
 )
 
-type Pos struct {
-	x float32
-	y float32
-}
-
-var PosType = reflect.TypeOf(Pos{})
-
-type Vel struct {
-	x float32
-	y float32
-}
-
-var VelType = reflect.TypeOf(Vel{})
-
 type resetEvent struct{}
 
-func ResetHListener(wld *World, e interface{}, _ float32) error {
+func ResetHListener(world *goecs.World, e interface{}, _ float32) error {
 	switch e.(type) {
 	case resetEvent:
-		for it := wld.Iterator(PosType, VelType); it != nil; it = it.Next() {
+		for it := world.Iterator(PosType, VelType); it != nil; it = it.Next() {
 			v := it.Value()
 			pos := v.Get(PosType).(Pos)
 
-			pos.x = 0
+			pos.X = 0
 			v.Set(pos)
 		}
 	}
 	return nil
 }
 
-func HMovementSystem(wld *World, _ float32) error {
-	for it := wld.Iterator(PosType, VelType); it != nil; it = it.Next() {
+func HMovementSystem(world *goecs.World, _ float32) error {
+	for it := world.Iterator(PosType, VelType); it != nil; it = it.Next() {
 		v := it.Value()
 		pos := v.Get(PosType).(Pos)
 		vel := v.Get(VelType).(Vel)
 
-		pos.x += vel.x
+		pos.X += vel.X
 		v.Set(pos)
 	}
 
 	return nil
 }
 
-func ResetVListener(wld *World, e interface{}, _ float32) error {
+func ResetVListener(world *goecs.World, e interface{}, _ float32) error {
 	switch e.(type) {
 	case resetEvent:
-		for it := wld.Iterator(PosType, VelType); it != nil; it = it.Next() {
+		for it := world.Iterator(PosType, VelType); it != nil; it = it.Next() {
 			v := it.Value()
 			pos := v.Get(PosType).(Pos)
 
-			pos.y = 0
+			pos.Y = 0
 			v.Set(pos)
 		}
 	}
 	return nil
 }
 
-func VMovementSystem(wld *World, _ float32) error {
-	for it := wld.Iterator(PosType, VelType); it != nil; it = it.Next() {
+func VMovementSystem(world *goecs.World, _ float32) error {
+	for it := world.Iterator(PosType, VelType); it != nil; it = it.Next() {
 		v := it.Value()
 		pos := v.Get(PosType).(Pos)
 		vel := v.Get(VelType).(Vel)
 
-		pos.y += vel.y
+		pos.Y += vel.Y
 		v.Set(pos)
 	}
 	return nil
@@ -101,92 +87,92 @@ func VMovementSystem(wld *World, _ float32) error {
 
 var errFailure = errors.New("failure")
 
-func FailureSystem(_ *World, _ float32) error {
+func FailureSystem(_ *goecs.World, _ float32) error {
 	return errFailure
 }
 
-func FailureListener(_ *World, _ interface{}, _ float32) error {
+func FailureListener(_ *goecs.World, _ interface{}, _ float32) error {
 	return errFailure
 }
 
 func TestWorld_Update(t *testing.T) {
 	t.Run("update single system should work", func(t *testing.T) {
-		world := New()
+		world := goecs.New()
 		world.AddSystem(HMovementSystem)
 
-		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+		world.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
+		world.AddEntity(Pos{X: 2, Y: 2})
+		world.AddEntity(Pos{X: 3, Y: 3}, Vel{X: 4, Y: 4})
 
 		_ = world.Update(0)
 
 		expectPositions(t, world, []Pos{
-			{x: 1, y: 0},
-			{x: 2, y: 2},
-			{x: 7, y: 3},
+			{X: 1, Y: 0},
+			{X: 2, Y: 2},
+			{X: 7, Y: 3},
 		})
 	})
 
 	t.Run("update multiple systems should work", func(t *testing.T) {
-		world := New()
+		world := goecs.New()
 		world.AddSystem(HMovementSystem)
 		world.AddSystem(VMovementSystem)
 
-		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+		world.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
+		world.AddEntity(Pos{X: 2, Y: 2})
+		world.AddEntity(Pos{X: 3, Y: 3}, Vel{X: 4, Y: 4})
 
 		_ = world.Update(0)
 
 		expectPositions(t, world, []Pos{
-			{x: 1, y: 1},
-			{x: 2, y: 2},
-			{x: 7, y: 7},
+			{X: 1, Y: 1},
+			{X: 2, Y: 2},
+			{X: 7, Y: 7},
 		})
 	})
 }
 
 func TestWorld_UpdateGroup(t *testing.T) {
 	t.Run("update single system should work", func(t *testing.T) {
-		world := New()
+		world := goecs.New()
 		world.AddSystem(HMovementSystem)
 
-		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+		world.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
+		world.AddEntity(Pos{X: 2, Y: 2})
+		world.AddEntity(Pos{X: 3, Y: 3}, Vel{X: 4, Y: 4})
 
 		_ = world.Update(0)
 
 		expectPositions(t, world, []Pos{
-			{x: 1, y: 0},
-			{x: 2, y: 2},
-			{x: 7, y: 3},
+			{X: 1, Y: 0},
+			{X: 2, Y: 2},
+			{X: 7, Y: 3},
 		})
 	})
 
 	t.Run("update multiple systems should work", func(t *testing.T) {
-		world := New()
+		world := goecs.New()
 		world.AddSystem(HMovementSystem)
 		world.AddSystem(VMovementSystem)
 
-		world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-		world.Add(entity.New().Add(Pos{x: 2, y: 2}))
-		world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+		world.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
+		world.AddEntity(Pos{X: 2, Y: 2})
+		world.AddEntity(Pos{X: 3, Y: 3}, Vel{X: 4, Y: 4})
 
 		_ = world.Update(0)
 
 		expectPositions(t, world, []Pos{
-			{x: 1, y: 1},
-			{x: 2, y: 2},
-			{x: 7, y: 7},
+			{X: 1, Y: 1},
+			{X: 2, Y: 2},
+			{X: 7, Y: 7},
 		})
 	})
 }
 
-func expectPositions(t *testing.T, wld *World, want []Pos) {
+func expectPositions(t *testing.T, world *goecs.World, want []Pos) {
 	t.Helper()
 	got := make([]Pos, 0)
-	for it := wld.Iterator(PosType); it != nil; it = it.Next() {
+	for it := world.Iterator(PosType); it != nil; it = it.Next() {
 		v := it.Value()
 		got = append(got, v.Get(PosType).(Pos))
 	}
@@ -197,15 +183,15 @@ func expectPositions(t *testing.T, wld *World, want []Pos) {
 }
 
 func TestWorld_String(t *testing.T) {
-	world := New()
+	world := goecs.New()
 	world.AddSystem(HMovementSystem)
 	world.AddSystem(VMovementSystem)
-	world.Listen(ResetHListener)
-	world.Listen(ResetVListener)
+	world.AddListener(ResetHListener)
+	world.AddListener(ResetVListener)
 
-	world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-	world.Add(entity.New().Add(Pos{x: 2, y: 2}))
-	world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+	world.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
+	world.AddEntity(Pos{X: 2, Y: 2})
+	world.AddEntity(Pos{X: 3, Y: 3}, Vel{X: 4, Y: 4})
 
 	s := world.String()
 	fmt.Println(s)
@@ -216,12 +202,12 @@ func TestWorld_String(t *testing.T) {
 }
 
 func TestWorld_Update_Error(t *testing.T) {
-	world := New()
+	world := goecs.New()
 	world.AddSystem(FailureSystem)
 	world.AddSystem(HMovementSystem)
 	world.AddSystem(VMovementSystem)
 
-	world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
+	world.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
 
 	e := world.Update(0)
 
@@ -230,56 +216,56 @@ func TestWorld_Update_Error(t *testing.T) {
 	}
 
 	expectPositions(t, world, []Pos{
-		{x: 0, y: 0},
+		{X: 0, Y: 0},
 	})
 }
 
 func TestWorld_Signal(t *testing.T) {
-	world := New()
+	world := goecs.New()
 	world.AddSystem(HMovementSystem)
 	world.AddSystem(VMovementSystem)
-	world.Listen(ResetHListener)
-	world.Listen(ResetVListener)
+	world.AddListener(ResetHListener)
+	world.AddListener(ResetVListener)
 
-	world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-	world.Add(entity.New().Add(Pos{x: 2, y: 2}))
-	world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+	world.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
+	world.AddEntity(Pos{X: 2, Y: 2})
+	world.AddEntity(Pos{X: 3, Y: 3}, Vel{X: 4, Y: 4})
 
 	_ = world.Update(0)
 
 	expectPositions(t, world, []Pos{
-		{x: 1, y: 1},
-		{x: 2, y: 2},
-		{x: 7, y: 7},
+		{X: 1, Y: 1},
+		{X: 2, Y: 2},
+		{X: 7, Y: 7},
 	})
 
 	_ = world.Signal(resetEvent{})
 	_ = world.Update(0)
 
 	expectPositions(t, world, []Pos{
-		{x: 0, y: 0},
-		{x: 2, y: 2},
-		{x: 0, y: 0},
+		{X: 0, Y: 0},
+		{X: 2, Y: 2},
+		{X: 0, Y: 0},
 	})
 
 	_ = world.Update(0)
 
 	expectPositions(t, world, []Pos{
-		{x: 1, y: 1},
-		{x: 2, y: 2},
-		{x: 4, y: 4},
+		{X: 1, Y: 1},
+		{X: 2, Y: 2},
+		{X: 4, Y: 4},
 	})
 }
 
 func TestWorld_SignalMultiple(t *testing.T) {
-	wld := New()
+	world := goecs.New()
 
 	type nunEvent struct {
 		num int
 	}
 
 	sum := 0
-	wld.Listen(func(wld *World, e interface{}, _ float32) error {
+	world.AddListener(func(world *goecs.World, e interface{}, _ float32) error {
 		switch n := e.(type) {
 		case nunEvent:
 			sum += n.num
@@ -287,12 +273,12 @@ func TestWorld_SignalMultiple(t *testing.T) {
 		return nil
 	})
 
-	_ = wld.Signal(nunEvent{num: 1})
-	_ = wld.Signal(nunEvent{num: 2})
-	_ = wld.Signal(nunEvent{num: 3})
-	_ = wld.Signal(nunEvent{num: 4})
+	_ = world.Signal(nunEvent{num: 1})
+	_ = world.Signal(nunEvent{num: 2})
+	_ = world.Signal(nunEvent{num: 3})
+	_ = world.Signal(nunEvent{num: 4})
 
-	_ = wld.Update(0)
+	_ = world.Update(0)
 
 	got := sum
 	expect := 10
@@ -303,14 +289,14 @@ func TestWorld_SignalMultiple(t *testing.T) {
 }
 
 func TestWorld_Signal_Error(t *testing.T) {
-	world := New()
-	world.Listen(FailureListener)
+	world := goecs.New()
+	world.AddListener(FailureListener)
 	world.AddSystem(HMovementSystem)
 	world.AddSystem(VMovementSystem)
 
-	world.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-	world.Add(entity.New().Add(Pos{x: 2, y: 2}))
-	world.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+	world.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
+	world.AddEntity(Pos{X: 2, Y: 2})
+	world.AddEntity(Pos{X: 3, Y: 3}, Vel{X: 4, Y: 4})
 
 	e := world.Update(0)
 
@@ -319,9 +305,9 @@ func TestWorld_Signal_Error(t *testing.T) {
 	}
 
 	expectPositions(t, world, []Pos{
-		{x: 1, y: 1},
-		{x: 2, y: 2},
-		{x: 7, y: 7},
+		{X: 1, Y: 1},
+		{X: 2, Y: 2},
+		{X: 7, Y: 7},
 	})
 
 	e = world.Signal(resetEvent{})
@@ -337,28 +323,28 @@ func TestWorld_Signal_Error(t *testing.T) {
 	}
 
 	expectPositions(t, world, []Pos{
-		{x: 2, y: 2},
-		{x: 2, y: 2},
-		{x: 11, y: 11},
+		{X: 2, Y: 2},
+		{X: 2, Y: 2},
+		{X: 11, Y: 11},
 	})
 }
 
 var systemCalls []string
 
-func systemA(_ *World, _ float32) error {
+func systemA(_ *goecs.World, _ float32) error {
 	systemCalls = append(systemCalls, "update a")
 	return nil
 }
-func listenerA(_ *World, _ interface{}, _ float32) error {
+func listenerA(_ *goecs.World, _ interface{}, _ float32) error {
 	systemCalls = append(systemCalls, "notify a")
 	return nil
 }
 
-func systemB(_ *World, _ float32) error {
+func systemB(_ *goecs.World, _ float32) error {
 	systemCalls = append(systemCalls, "update b")
 	return nil
 }
-func listenerB(_ *World, _ interface{}, _ float32) error {
+func listenerB(_ *goecs.World, _ interface{}, _ float32) error {
 	systemCalls = append(systemCalls, "notify b")
 	return nil
 }
@@ -366,17 +352,17 @@ func listenerB(_ *World, _ interface{}, _ float32) error {
 func TestWorld_AddSystemWithPriority(t *testing.T) {
 	type testCase struct {
 		name   string
-		setup  func(wld *World)
+		setup  func(world *goecs.World)
 		expect []string
 	}
 	for _, tc := range []testCase{
 		{
 			name: "without priority",
-			setup: func(wld *World) {
-				wld.AddSystem(systemA)
-				wld.AddSystem(systemB)
-				wld.Listen(listenerA)
-				wld.Listen(listenerB)
+			setup: func(world *goecs.World) {
+				world.AddSystem(systemA)
+				world.AddSystem(systemB)
+				world.AddListener(listenerA)
+				world.AddListener(listenerB)
 			},
 			expect: []string{
 				"update a",
@@ -387,11 +373,11 @@ func TestWorld_AddSystemWithPriority(t *testing.T) {
 		},
 		{
 			name: "with priority",
-			setup: func(wld *World) {
-				wld.AddSystem(systemA)
-				wld.Listen(listenerA)
-				wld.AddSystemWithPriority(systemB, 100)
-				wld.ListenWithPriority(listenerB, 100)
+			setup: func(world *goecs.World) {
+				world.AddSystem(systemA)
+				world.AddListener(listenerA)
+				world.AddSystemWithPriority(systemB, 100)
+				world.AddListenerWithPriority(listenerB, 100)
 			},
 			expect: []string{
 				"update b",
@@ -402,11 +388,11 @@ func TestWorld_AddSystemWithPriority(t *testing.T) {
 		},
 		{
 			name: "with priority inverted",
-			setup: func(wld *World) {
-				wld.AddSystem(systemB)
-				wld.Listen(listenerB)
-				wld.AddSystemWithPriority(systemA, -100)
-				wld.ListenWithPriority(listenerA, -100)
+			setup: func(world *goecs.World) {
+				world.AddSystem(systemB)
+				world.AddListener(listenerB)
+				world.AddSystemWithPriority(systemA, -100)
+				world.AddListenerWithPriority(listenerA, -100)
 			},
 			expect: []string{
 				"update b",
@@ -418,12 +404,12 @@ func TestWorld_AddSystemWithPriority(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			systemCalls = make([]string, 0)
-			wld := New()
+			world := goecs.New()
 
-			tc.setup(wld)
+			tc.setup(world)
 
-			_ = wld.Signal("hello")
-			_ = wld.Update(0)
+			_ = world.Signal("hello")
+			_ = world.Update(0)
 
 			if !reflect.DeepEqual(systemCalls, tc.expect) {
 				t.Fatalf("got %v, want %v", systemCalls, tc.expect)
@@ -433,28 +419,20 @@ func TestWorld_AddSystemWithPriority(t *testing.T) {
 }
 
 func TestWorld_Clear(t *testing.T) {
-	wld := New()
+	world := goecs.New()
 
-	wld.AddSystem(HMovementSystem)
-	wld.AddSystem(VMovementSystem)
+	world.AddSystem(HMovementSystem)
+	world.AddSystem(VMovementSystem)
 
-	wld.Add(entity.New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1}))
-	wld.Add(entity.New().Add(Pos{x: 2, y: 2}))
-	wld.Add(entity.New().Add(Pos{x: 3, y: 3}).Add(Vel{x: 4, y: 4}))
+	world.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
+	world.AddEntity(Pos{X: 2, Y: 2})
+	world.AddEntity(Pos{X: 3, Y: 3}, Vel{X: 4, Y: 4})
 
-	wld.Clear()
+	world.Clear()
 
-	got := wld.systems.Size()
+	got := world.Size()
 
 	expect := 0
-
-	if got != expect {
-		t.Fatalf("error on world clear got %d system, want %d systems", got, expect)
-	}
-
-	got = wld.Size()
-
-	expect = 0
 
 	if got != expect {
 		t.Fatalf("error on world clear got %d entities, want %d entities", got, expect)
@@ -465,12 +443,12 @@ type constantVelocity struct {
 	vel Vel
 }
 
-func (cv *constantVelocity) system(wld *World, _ float32) error {
-	for it := wld.Iterator(PosType); it != nil; it = it.Next() {
+func (cv *constantVelocity) system(world *goecs.World, _ float32) error {
+	for it := world.Iterator(PosType); it != nil; it = it.Next() {
 		v := it.Value()
 		pos := v.Get(PosType).(Pos)
-		pos.x += cv.vel.x
-		pos.y += cv.vel.y
+		pos.X += cv.vel.X
+		pos.Y += cv.vel.Y
 		v.Set(pos)
 	}
 
@@ -484,20 +462,20 @@ func newConstantVelocity(vel Vel) constantVelocity {
 }
 
 func Test_SystemsInStruct(t *testing.T) {
-	wld := New()
+	world := goecs.New()
 
-	wld.Add(entity.New().Add(Pos{x: 0, y: 0}))
-	wld.Add(entity.New().Add(Pos{x: 2, y: 2}))
-	wld.Add(entity.New().Add(Pos{x: 3, y: 3}))
+	world.AddEntity(Pos{X: 0, Y: 0})
+	world.AddEntity(Pos{X: 2, Y: 2})
+	world.AddEntity(Pos{X: 3, Y: 3})
 
-	cv := newConstantVelocity(Vel{x: 1, y: 2})
-	wld.AddSystem(cv.system)
+	cv := newConstantVelocity(Vel{X: 1, Y: 2})
+	world.AddSystem(cv.system)
 
-	_ = wld.Update(0)
+	_ = world.Update(0)
 
-	expectPositions(t, wld, []Pos{
-		{x: 1, y: 2},
-		{x: 3, y: 4},
-		{x: 4, y: 5},
+	expectPositions(t, world, []Pos{
+		{X: 1, Y: 2},
+		{X: 3, Y: 4},
+		{X: 4, Y: 5},
 	})
 }

@@ -20,8 +20,7 @@
  *  THE SOFTWARE.
  */
 
-// Package entity  contains the objects to manage the Entity objects in a ECS
-package entity
+package goecs
 
 import (
 	"fmt"
@@ -57,8 +56,8 @@ func (ent Entity) String() string {
 	return "Entity{" + result + "}"
 }
 
-// New creates a new Entity giving a set of varg components
-func New(components ...interface{}) *Entity {
+// NewEntity creates a new Entity giving a set of varg components
+func NewEntity(components ...interface{}) *Entity {
 	ent := Entity{
 		id:         lastID,
 		components: make(map[reflect.Type]interface{}),

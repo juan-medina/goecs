@@ -23,58 +23,61 @@ For a more in deep read on this topic I could recommend this [article](https://m
 
 ## Example
 
-[Run it on the Go Playground](https://play.golang.org/p/Z86IykVbChF)
+[Run it on the Go Playground](https://play.golang.org/p/oVCOy1wXBS9)
 ```go
 package main
 
 import (
-	"github.com/juan-medina/goecs/entity"
-	"github.com/juan-medina/goecs/world"
-	"log"
+	"fmt"
+	"github.com/juan-medina/goecs"
 	"reflect"
 )
 
 // Simple Usage
 func main() {
 	// creates the world
-	wld := world.New()
+	world := goecs.New()
 
 	// add our movement system
-	wld.AddSystem(MovementSystem)
+	world.AddSystem(MovementSystem)
 
 	// add a listener
-	wld.Listen(ChangePostListener)
+	world.AddListener(ChangePostListener)
 
 	// add a first entity
-	wld.Add(entity.New(
+	world.AddEntity(
 		Pos{X: 0, Y: 0},
 		Vel{X: 1, Y: 1},
-	))
+	)
 
 	// this entity shouldn't be updated
-	wld.Add(entity.New(
+	world.AddEntity(
 		Pos{X: 2, Y: 2},
-	))
+	)
 
 	// add a third entity
-	wld.Add(entity.New(
+	world.AddEntity(
 		Pos{X: 2, Y: 2},
 		Vel{X: 3, Y: 3},
-	))
+	)
 
 	// ask the world to update
-	if err := wld.Update(0.5); err != nil {
-		log.Fatalf("error on update %v", err)
+	if err := world.Update(0.5); err != nil {
+		fmt.Printf("error on update %v\n", err)
 	}
 
 	// print the world
-	log.Printf("world: %v", wld)
+	fmt.Println()
+	fmt.Println("Pos:")
+	for it := world.Iterator(PosType); it != nil; it = it.Next() {
+		fmt.Println(it.Value().Get(PosType))
+	}
 }
 
 // MovementSystem is a simple movement system
-func MovementSystem(wld *world.World, delta float32) error {
+func MovementSystem(world *goecs.World, delta float32) error {
 	// get all the entities that we need to update, only if they have Pos & Vel
-	for it := wld.Iterator(PosType, VelType); it != nil; it = it.Next() {
+	for it := world.Iterator(PosType, VelType); it != nil; it = it.Next() {
 		// get the values
 		ent := it.Value()
 		pos := ent.Get(PosType).(Pos)
@@ -87,7 +90,7 @@ func MovementSystem(wld *world.World, delta float32) error {
 		}
 
 		// signal the change
-		if err := wld.Signal(PosChangeSignal{From: pos, To: npos}); err != nil {
+		if err := world.Signal(PosChangeSignal{From: pos, To: npos}); err != nil {
 			return err
 		}
 
@@ -99,11 +102,11 @@ func MovementSystem(wld *world.World, delta float32) error {
 }
 
 // ChangePostListener listen to PosChangeSignal
-func ChangePostListener(wld *world.World, signal interface{}, delta float32) error {
+func ChangePostListener(world *goecs.World, signal interface{}, delta float32) error {
 	switch s := signal.(type) {
 	case PosChangeSignal:
 		// print the change
-		log.Printf("pos change from %v to %v", s.From, s.To)
+		fmt.Printf("pos change from %v to %v\n", s.From, s.To)
 	}
 	return nil
 }
@@ -134,7 +137,15 @@ type PosChangeSignal struct {
 ```
 This will output:
 
-`world: World{view: View{entities: [Entity{id{0},main.Pos{0.5 0.5},main.Vel{1 1}},Entity{id{1},main.Pos{2 2}},Entity{id{2},main.Pos{3.5 3.5},main.Vel{3 3}}]}, systems: [{main.MovementSystem}] listeners: []}`
+```
+pos change from {0 0} to {0.5 0.5}
+pos change from {2 2} to {3.5 3.5}
+
+Pos:
+{0.5 0.5}
+{2 2}
+{3.5 3.5}
+```
 
 ## Installation
 

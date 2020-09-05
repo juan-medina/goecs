@@ -20,23 +20,21 @@
  *  THE SOFTWARE.
  */
 
-// Package world allows to create an use our ECS World
-package world
+package goecs
 
 import (
 	"fmt"
 	"github.com/juan-medina/goecs/sparse"
-	"github.com/juan-medina/goecs/view"
 	"reflect"
 	"runtime"
 	"sort"
 )
 
 // System get invoke with Update() from a World
-type System func(wld *World, delta float32) error
+type System func(world *World, delta float32) error
 
 // Listener the get notified that a new signal has been received by World.Signal
-type Listener func(wld *World, signal interface{}, delta float32) error
+type Listener func(world *World, signal interface{}, delta float32) error
 
 type systemWithPriority struct {
 	system   System
@@ -65,22 +63,22 @@ var (
 	lastListenerID = int64(0)
 )
 
-// World is a view.View that contains the entity.Entity and System of our ECS
+// World is a view.View that contains the Entity and System of our ECS
 type World struct {
-	*view.View
+	*View
 	systems   sparse.Slice
 	listeners sparse.Slice
 	events    sparse.Slice
 }
 
 // String get a string representation of our World
-func (wld World) String() string {
+func (world World) String() string {
 	result := ""
 
-	result += fmt.Sprintf("World{view: %v, systems: [", wld.View)
+	result += fmt.Sprintf("World{view: %v, systems: [", world.View)
 
 	str := ""
-	for it := wld.systems.Iterator(); it != nil; it = it.Next() {
+	for it := world.systems.Iterator(); it != nil; it = it.Next() {
 		s := it.Value().(systemWithPriority)
 		if str != "" {
 			str += ","
@@ -93,7 +91,7 @@ func (wld World) String() string {
 	result += str + " listeners: ["
 
 	str = ""
-	for it := wld.listeners.Iterator(); it != nil; it = it.Next() {
+	for it := world.listeners.Iterator(); it != nil; it = it.Next() {
 		l := it.Value().(listenerWithPriority)
 		if str != "" {
 			str += ","
@@ -109,13 +107,13 @@ func (wld World) String() string {
 }
 
 // AddSystem adds the given System to the world
-func (wld *World) AddSystem(sys System) {
-	wld.AddSystemWithPriority(sys, defaultPriority)
+func (world *World) AddSystem(sys System) {
+	world.AddSystemWithPriority(sys, defaultPriority)
 }
 
-// AddSystemWithPriority adds the given System to the world
-func (wld *World) AddSystemWithPriority(sys System, priority int32) {
-	wld.systems.Add(systemWithPriority{
+// AddSystemWithPriority adds the given System to the world with a priority
+func (world *World) AddSystemWithPriority(sys System, priority int32) {
+	world.systems.Add(systemWithPriority{
 		system:   sys,
 		priority: priority,
 		id:       lastSystemID,
@@ -123,14 +121,14 @@ func (wld *World) AddSystemWithPriority(sys System, priority int32) {
 	lastSystemID++
 }
 
-// Listen adds the given System to the world
-func (wld *World) Listen(lis Listener) {
-	wld.ListenWithPriority(lis, defaultPriority)
+// AddListener adds the given Listener to the world
+func (world *World) AddListener(lis Listener) {
+	world.AddListenerWithPriority(lis, defaultPriority)
 }
 
-// ListenWithPriority adds the given System to the world
-func (wld *World) ListenWithPriority(lis Listener, priority int32) {
-	wld.listeners.Add(listenerWithPriority{
+// AddListenerWithPriority adds the given Listener to the world with a priority
+func (world *World) AddListenerWithPriority(lis Listener, priority int32) {
+	world.listeners.Add(listenerWithPriority{
 		listener: lis,
 		priority: priority,
 		id:       lastListenerID,
@@ -139,28 +137,28 @@ func (wld *World) ListenWithPriority(lis Listener, priority int32) {
 }
 
 // sendEvents send the pending events to the System on the world
-func (wld *World) sendEvents(delta float32) error {
+func (world *World) sendEvents(delta float32) error {
 	// for hold a copy of the events
-	events := make([]interface{}, wld.events.Size())
+	events := make([]interface{}, world.events.Size())
 
 	// get all events for this hold
 	i := 0
-	for it := wld.events.Iterator(); it != nil; it = it.Next() {
+	for it := world.events.Iterator(); it != nil; it = it.Next() {
 		events[i] = it.Value()
 		i++
 	}
 
 	// clear the hold
-	wld.events.Clear()
+	world.events.Clear()
 
 	// get the listener list
-	listeners := wld.getListenersPriorityList()
+	listeners := world.getListenersPriorityList()
 
 	for _, e := range events {
 		// range systems
 		for _, l := range listeners {
 			// notify the event to the system
-			if err := l.listener(wld, e, delta); err != nil {
+			if err := l.listener(world, e, delta); err != nil {
 				return err
 			}
 		}
@@ -169,11 +167,11 @@ func (wld *World) sendEvents(delta float32) error {
 	return nil
 }
 
-func (wld World) getSystemsPriorityList() []systemWithPriority {
-	result := make([]systemWithPriority, wld.systems.Size())
+func (world World) getSystemsPriorityList() []systemWithPriority {
+	result := make([]systemWithPriority, world.systems.Size())
 
 	i := 0
-	for it := wld.systems.Iterator(); it != nil; it = it.Next() {
+	for it := world.systems.Iterator(); it != nil; it = it.Next() {
 		result[i] = it.Value().(systemWithPriority)
 		i++
 	}
@@ -190,11 +188,11 @@ func (wld World) getSystemsPriorityList() []systemWithPriority {
 	return result
 }
 
-func (wld World) getListenersPriorityList() []listenerWithPriority {
-	result := make([]listenerWithPriority, wld.listeners.Size())
+func (world World) getListenersPriorityList() []listenerWithPriority {
+	result := make([]listenerWithPriority, world.listeners.Size())
 
 	i := 0
-	for it := wld.listeners.Iterator(); it != nil; it = it.Next() {
+	for it := world.listeners.Iterator(); it != nil; it = it.Next() {
 		result[i] = it.Value().(listenerWithPriority)
 		i++
 	}
@@ -212,15 +210,15 @@ func (wld World) getListenersPriorityList() []listenerWithPriority {
 }
 
 // Update ask to update the System send the pending events
-func (wld *World) Update(delta float32) error {
-	pl := wld.getSystemsPriorityList()
+func (world *World) Update(delta float32) error {
+	pl := world.getSystemsPriorityList()
 	for _, s := range pl {
-		if err := s.system(wld, delta); err != nil {
+		if err := s.system(world, delta); err != nil {
 			return err
 		}
 	}
 
-	if err := wld.sendEvents(delta); err != nil {
+	if err := world.sendEvents(delta); err != nil {
 		return err
 	}
 
@@ -228,23 +226,23 @@ func (wld *World) Update(delta float32) error {
 }
 
 // Signal signal an event to be sent
-func (wld *World) Signal(event interface{}) error {
+func (world *World) Signal(event interface{}) error {
 	// add the event
-	wld.events.Add(event)
+	world.events.Add(event)
 
 	return nil
 }
 
-// Clear removes all world.System and entity.Entity from the world.World
-func (wld *World) Clear() {
-	wld.systems.Clear()
-	wld.View.Clear()
+// Clear removes all world.System and Entity from the World
+func (world *World) Clear() {
+	world.systems.Clear()
+	world.View.Clear()
 }
 
 // New creates a new World
 func New() *World {
 	return &World{
-		View:      view.New(),
+		View:      NewView(),
 		systems:   sparse.NewSlice(systemsInitialCapacity, systemsCapacityGrow),
 		listeners: sparse.NewSlice(listenersInitialCapacity, listenersCapacityGrow),
 		events:    sparse.NewSlice(eventsInitialCapacity, eventsCapacityGrow),

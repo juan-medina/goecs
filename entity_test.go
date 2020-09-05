@@ -20,47 +20,34 @@
  *  THE SOFTWARE.
  */
 
-package entity
+package goecs_test
 
 import (
+	"github.com/juan-medina/goecs"
 	"reflect"
 	"testing"
 )
 
-type Pos struct {
-	x float32
-	y float32
-}
-
-var PosType = reflect.TypeOf(Pos{})
-
-type Vel struct {
-	x float32
-	y float32
-}
-
-var VelType = reflect.TypeOf(Vel{})
-
-func TestNew(t *testing.T) {
-	ent1 := New().Add(Pos{
-		x: 1,
-		y: 1,
+func TestNewEntity(t *testing.T) {
+	ent1 := goecs.NewEntity().Add(Pos{
+		X: 1,
+		Y: 1,
 	}).Add(Vel{
-		x: 2,
-		y: 2,
+		X: 2,
+		Y: 2,
 	})
 
 	gotPos := ent1.Get(PosType).(Pos)
 	gotVel := ent1.Get(VelType).(Vel)
 
 	expectPos := Pos{
-		x: 1,
-		y: 1,
+		X: 1,
+		Y: 1,
 	}
 
 	expectVel := Vel{
-		x: 2,
-		y: 2,
+		X: 2,
+		Y: 2,
 	}
 
 	if !reflect.DeepEqual(gotPos, expectPos) {
@@ -73,25 +60,25 @@ func TestNew(t *testing.T) {
 }
 
 func TestNew_With_Components(t *testing.T) {
-	ent1 := New(Pos{
-		x: 1,
-		y: 1,
+	ent1 := goecs.NewEntity(Pos{
+		X: 1,
+		Y: 1,
 	}, Vel{
-		x: 2,
-		y: 2,
+		X: 2,
+		Y: 2,
 	})
 
 	gotPos := ent1.Get(PosType).(Pos)
 	gotVel := ent1.Get(VelType).(Vel)
 
 	expectPos := Pos{
-		x: 1,
-		y: 1,
+		X: 1,
+		Y: 1,
 	}
 
 	expectVel := Vel{
-		x: 2,
-		y: 2,
+		X: 2,
+		Y: 2,
 	}
 
 	if !reflect.DeepEqual(gotPos, expectPos) {
@@ -104,14 +91,14 @@ func TestNew_With_Components(t *testing.T) {
 }
 
 func TestEntity_Get(t *testing.T) {
-	ent1 := New().Add(Pos{
-		x: 1,
-		y: 1,
+	ent1 := goecs.NewEntity().Add(Pos{
+		X: 1,
+		Y: 1,
 	})
 
 	expectPos := Pos{
-		x: 1,
-		y: 1,
+		X: 1,
+		Y: 1,
 	}
 
 	gotPos, ok := ent1.Get(PosType).(Pos)
@@ -139,17 +126,17 @@ func TestEntity_Get(t *testing.T) {
 }
 
 func TestEntity_Contains(t *testing.T) {
-	ent1 := New().Add(Pos{
-		x: 1,
-		y: 1,
+	ent1 := goecs.NewEntity().Add(Pos{
+		X: 1,
+		Y: 1,
 	}).Add(Vel{
-		x: 2,
-		y: 2,
+		X: 2,
+		Y: 2,
 	})
 
-	ent2 := New().Add(Pos{
-		x: 1,
-		y: 1,
+	ent2 := goecs.NewEntity().Add(Pos{
+		X: 1,
+		Y: 1,
 	})
 
 	t.Run("expect to Contains pos and vel", func(t *testing.T) {
@@ -178,17 +165,17 @@ func TestEntity_Contains(t *testing.T) {
 }
 
 func TestEntity_NoContains(t *testing.T) {
-	ent1 := New().Add(Pos{
-		x: 1,
-		y: 1,
+	ent1 := goecs.NewEntity().Add(Pos{
+		X: 1,
+		Y: 1,
 	}).Add(Vel{
-		x: 2,
-		y: 2,
+		X: 2,
+		Y: 2,
 	})
 
-	ent2 := New().Add(Pos{
-		x: 1,
-		y: 1,
+	ent2 := goecs.NewEntity().Add(Pos{
+		X: 1,
+		Y: 1,
 	})
 
 	var want bool
@@ -244,18 +231,18 @@ func TestEntity_NoContains(t *testing.T) {
 }
 
 func TestEntity_Set(t *testing.T) {
-	ent1 := New().Add(Pos{
-		x: 1,
-		y: 1,
+	ent1 := goecs.NewEntity().Add(Pos{
+		X: 1,
+		Y: 1,
 	}).Add(Vel{
-		x: 2,
-		y: 2,
+		X: 2,
+		Y: 2,
 	})
 
 	pos := ent1.Get(PosType).(Pos)
 
-	pos.x = 3
-	pos.y = 3
+	pos.X = 3
+	pos.Y = 3
 
 	ent1.Set(pos)
 
@@ -267,7 +254,7 @@ func TestEntity_Set(t *testing.T) {
 }
 
 func TestEntity_String(t *testing.T) {
-	ent := New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1})
+	ent := goecs.NewEntity().Add(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
 
 	s := ent.String()
 
@@ -277,8 +264,8 @@ func TestEntity_String(t *testing.T) {
 }
 
 func TestEntity_Id(t *testing.T) {
-	ent1 := New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1})
-	ent2 := New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1})
+	ent1 := goecs.NewEntity().Add(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
+	ent2 := goecs.NewEntity().Add(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
 
 	if !(ent1.ID() <= ent2.ID()) {
 		t.Fatalf("expect ent1 to have bigger id than ent 2, ent1 %v ent2 %v", ent1, ent2)
@@ -286,7 +273,7 @@ func TestEntity_Id(t *testing.T) {
 }
 
 func TestEntity_Remove(t *testing.T) {
-	ent := New().Add(Pos{x: 0, y: 0}).Add(Vel{x: 1, y: 1})
+	ent := goecs.NewEntity().Add(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
 
 	var got bool
 	var want bool
