@@ -106,7 +106,7 @@ func TestWorld_Update(t *testing.T) {
 
 		_ = world.Update(0)
 
-		expectPositions(t, world, []Pos{
+		expectWorldPositions(t, world, []Pos{
 			{X: 1, Y: 0},
 			{X: 2, Y: 2},
 			{X: 7, Y: 3},
@@ -124,7 +124,7 @@ func TestWorld_Update(t *testing.T) {
 
 		_ = world.Update(0)
 
-		expectPositions(t, world, []Pos{
+		expectWorldPositions(t, world, []Pos{
 			{X: 1, Y: 1},
 			{X: 2, Y: 2},
 			{X: 7, Y: 7},
@@ -143,7 +143,7 @@ func TestWorld_UpdateGroup(t *testing.T) {
 
 		_ = world.Update(0)
 
-		expectPositions(t, world, []Pos{
+		expectWorldPositions(t, world, []Pos{
 			{X: 1, Y: 0},
 			{X: 2, Y: 2},
 			{X: 7, Y: 3},
@@ -161,7 +161,7 @@ func TestWorld_UpdateGroup(t *testing.T) {
 
 		_ = world.Update(0)
 
-		expectPositions(t, world, []Pos{
+		expectWorldPositions(t, world, []Pos{
 			{X: 1, Y: 1},
 			{X: 2, Y: 2},
 			{X: 7, Y: 7},
@@ -169,17 +169,9 @@ func TestWorld_UpdateGroup(t *testing.T) {
 	})
 }
 
-func expectPositions(t *testing.T, world *goecs.World, want []Pos) {
+func expectWorldPositions(t *testing.T, world *goecs.World, want []Pos) {
 	t.Helper()
-	got := make([]Pos, 0)
-	for it := world.Iterator(PosType); it != nil; it = it.Next() {
-		v := it.Value()
-		got = append(got, v.Get(PosType).(Pos))
-	}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %v, want %v", got, want)
-	}
+	expectViewPositions(t, world.View, want)
 }
 
 func TestWorld_String(t *testing.T) {
@@ -215,7 +207,7 @@ func TestWorld_Update_Error(t *testing.T) {
 		t.Fatalf("shoudl get failure but got %v", e)
 	}
 
-	expectPositions(t, world, []Pos{
+	expectWorldPositions(t, world, []Pos{
 		{X: 0, Y: 0},
 	})
 }
@@ -233,7 +225,7 @@ func TestWorld_Signal(t *testing.T) {
 
 	_ = world.Update(0)
 
-	expectPositions(t, world, []Pos{
+	expectWorldPositions(t, world, []Pos{
 		{X: 1, Y: 1},
 		{X: 2, Y: 2},
 		{X: 7, Y: 7},
@@ -242,7 +234,7 @@ func TestWorld_Signal(t *testing.T) {
 	_ = world.Signal(resetSignal{})
 	_ = world.Update(0)
 
-	expectPositions(t, world, []Pos{
+	expectWorldPositions(t, world, []Pos{
 		{X: 0, Y: 0},
 		{X: 2, Y: 2},
 		{X: 0, Y: 0},
@@ -250,7 +242,7 @@ func TestWorld_Signal(t *testing.T) {
 
 	_ = world.Update(0)
 
-	expectPositions(t, world, []Pos{
+	expectWorldPositions(t, world, []Pos{
 		{X: 1, Y: 1},
 		{X: 2, Y: 2},
 		{X: 4, Y: 4},
@@ -304,7 +296,7 @@ func TestWorld_Signal_Error(t *testing.T) {
 		t.Fatalf("shoudl not get error but got %v", e)
 	}
 
-	expectPositions(t, world, []Pos{
+	expectWorldPositions(t, world, []Pos{
 		{X: 1, Y: 1},
 		{X: 2, Y: 2},
 		{X: 7, Y: 7},
@@ -322,7 +314,7 @@ func TestWorld_Signal_Error(t *testing.T) {
 		t.Fatalf("shoudl get failure but got %v", e)
 	}
 
-	expectPositions(t, world, []Pos{
+	expectWorldPositions(t, world, []Pos{
 		{X: 2, Y: 2},
 		{X: 2, Y: 2},
 		{X: 11, Y: 11},
@@ -473,9 +465,33 @@ func Test_SystemsInStruct(t *testing.T) {
 
 	_ = world.Update(0)
 
-	expectPositions(t, world, []Pos{
+	expectWorldPositions(t, world, []Pos{
 		{X: 1, Y: 2},
 		{X: 3, Y: 4},
 		{X: 4, Y: 5},
+	})
+}
+
+func TestWorld_Sort(t *testing.T) {
+	world := goecs.New()
+
+	world.AddEntity(Pos{X: 3, Y: -3}).Add(Vel{X: 4, Y: 4})
+	world.AddEntity(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
+	world.AddEntity(Pos{X: 2, Y: -2})
+
+	world.Sort(sortByPosX)
+
+	expectWorldPositions(t, world, []Pos{
+		{X: 0, Y: 0},
+		{X: 2, Y: -2},
+		{X: 3, Y: -3},
+	})
+
+	world.Sort(sortByPosY)
+
+	expectWorldPositions(t, world, []Pos{
+		{X: 3, Y: -3},
+		{X: 2, Y: -2},
+		{X: 0, Y: 0},
 	})
 }

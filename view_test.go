@@ -34,6 +34,19 @@ type GameObject struct {
 
 var GameObjectType = reflect.TypeOf(GameObject{})
 
+func expectViewPositions(t *testing.T, view *goecs.View, want []Pos) {
+	t.Helper()
+	got := make([]Pos, 0)
+	for it := view.Iterator(PosType); it != nil; it = it.Next() {
+		v := it.Value()
+		got = append(got, v.Get(PosType).(Pos))
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+}
+
 func TestNewView(t *testing.T) {
 	view := goecs.NewView()
 	got := view.Size()
@@ -200,9 +213,9 @@ func TestView_String(t *testing.T) {
 func TestView_Clear(t *testing.T) {
 	view := goecs.NewView()
 
+	view.AddEntity(Pos{X: 3, Y: 3}).Add(Vel{X: 4, Y: 4})
 	view.AddEntity(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
 	view.AddEntity(Pos{X: 2, Y: 2})
-	view.AddEntity(Pos{X: 3, Y: 3}).Add(Vel{X: 4, Y: 4})
 
 	view.Clear()
 
@@ -213,4 +226,39 @@ func TestView_Clear(t *testing.T) {
 	if got != expect {
 		t.Fatalf("error on view clear got %d, want %d", got, expect)
 	}
+}
+
+func sortByPosX(a, b *goecs.Entity) bool {
+	posA := a.Get(PosType).(Pos)
+	posB := b.Get(PosType).(Pos)
+	return posA.X < posB.X
+}
+func sortByPosY(a, b *goecs.Entity) bool {
+	posA := a.Get(PosType).(Pos)
+	posB := b.Get(PosType).(Pos)
+	return posA.Y < posB.Y
+}
+
+func TestView_Sort(t *testing.T) {
+	view := goecs.NewView()
+
+	view.AddEntity(Pos{X: 3, Y: -3}).Add(Vel{X: 4, Y: 4})
+	view.AddEntity(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
+	view.AddEntity(Pos{X: 2, Y: -2})
+
+	view.Sort(sortByPosX)
+
+	expectViewPositions(t, view, []Pos{
+		{X: 0, Y: 0},
+		{X: 2, Y: -2},
+		{X: 3, Y: -3},
+	})
+
+	view.Sort(sortByPosY)
+
+	expectViewPositions(t, view, []Pos{
+		{X: 3, Y: -3},
+		{X: 2, Y: -2},
+		{X: 0, Y: 0},
+	})
 }

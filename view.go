@@ -123,6 +123,13 @@ func (vw *View) Clear() {
 	vw.entities.Clear()
 }
 
+// Sort the entities in place with a less function
+func (vw *View) Sort(less func(a, b *Entity) bool) {
+	vw.entities.Sort(func(a interface{}, b interface{}) bool {
+		return less(a.(*Entity), b.(*Entity))
+	})
+}
+
 // NewView creates a new empty View
 func NewView() *View {
 	return &View{
