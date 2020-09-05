@@ -20,7 +20,5 @@
  *  THE SOFTWARE.
  */
 
-package world
-
-// System get invoke with Update() from a World
-type System func(wld *World, delta float32) error
+// Package goecs is our public package
+package goecs

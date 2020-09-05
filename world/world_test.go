@@ -25,7 +25,7 @@ package world
 import (
 	"errors"
 	"fmt"
-	"github.com/juan-medina/goecs/pkg/entity"
+	"github.com/juan-medina/goecs/entity"
 	"reflect"
 	"testing"
 )

@@ -25,12 +25,18 @@ package world
 
 import (
 	"fmt"
-	"github.com/juan-medina/goecs/pkg/sparse"
-	"github.com/juan-medina/goecs/pkg/view"
+	"github.com/juan-medina/goecs/sparse"
+	"github.com/juan-medina/goecs/view"
 	"reflect"
 	"runtime"
 	"sort"
 )
+
+// System get invoke with Update() from a World
+type System func(wld *World, delta float32) error
+
+// Listener the get notified that a new signal has been received by World.Signal
+type Listener func(wld *World, signal interface{}, delta float32) error
 
 type systemWithPriority struct {
 	system   System

@@ -20,12 +20,12 @@
  *  THE SOFTWARE.
  */
 
-package pkg_test
+package goecs_test
 
 import (
-	"fmt"
-	"github.com/juan-medina/goecs/pkg/entity"
-	"github.com/juan-medina/goecs/pkg/world"
+	"github.com/juan-medina/goecs/entity"
+	"github.com/juan-medina/goecs/world"
+	"log"
 	"reflect"
 )
 
@@ -34,8 +34,11 @@ func Example() {
 	// creates the world
 	wld := world.New()
 
-	// ad our movement system
+	// add our movement system
 	wld.AddSystem(MovementSystem)
+
+	// add a listener
+	wld.Listen(ChangePostListener)
 
 	// add a first entity
 	wld.Add(entity.New(
@@ -55,25 +58,48 @@ func Example() {
 	))
 
 	// ask the world to update
-	_ = wld.Update(0.5)
+	if err := wld.Update(0.5); err != nil {
+		log.Fatalf("error on update %v", err)
+	}
 
 	// print the world
-	fmt.Printf("world: %v", wld)
+	log.Printf("world: %v", wld)
 }
 
 // MovementSystem is a simple movement system
 func MovementSystem(wld *world.World, delta float32) error {
+	// get all the entities that we need to update, only if they have Pos & Vel
 	for it := wld.Iterator(PosType, VelType); it != nil; it = it.Next() {
+		// get the values
 		ent := it.Value()
 		pos := ent.Get(PosType).(Pos)
 		vel := ent.Get(VelType).(Vel)
 
-		pos.X += vel.X * delta
-		pos.Y += vel.Y * delta
+		// calculate new pos
+		npos := Pos{
+			X: pos.X + (vel.X * delta),
+			Y: pos.Y + vel.Y*delta,
+		}
 
-		ent.Set(pos)
+		// signal the change
+		if err := wld.Signal(PosChangeSignal{From: pos, To: npos}); err != nil {
+			return err
+		}
+
+		// set the new pos
+		ent.Set(npos)
 	}
 
+	return nil
+}
+
+// ChangePostListener listen to PosChangeSignal
+func ChangePostListener(wld *world.World, signal interface{}, delta float32) error {
+	switch s := signal.(type) {
+	case PosChangeSignal:
+		// print the change
+		log.Printf("pos change from %v to %v", s.From, s.To)
+	}
 	return nil
 }
 
@@ -94,3 +120,9 @@ type Vel struct {
 
 // VelType is the reflect.Type of Vel
 var VelType = reflect.TypeOf(Vel{})
+
+// PosChangeSignal is a signal that a Pos has change
+type PosChangeSignal struct {
+	From Pos
+	To   Pos
+}

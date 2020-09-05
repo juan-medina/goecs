@@ -23,7 +23,7 @@
 package view
 
 import (
-	"github.com/juan-medina/goecs/pkg/entity"
+	"github.com/juan-medina/goecs/entity"
 	"reflect"
 	"testing"
 )

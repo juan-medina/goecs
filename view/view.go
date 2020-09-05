@@ -25,8 +25,8 @@ package view
 
 import (
 	"fmt"
-	"github.com/juan-medina/goecs/pkg/entity"
-	"github.com/juan-medina/goecs/pkg/sparse"
+	"github.com/juan-medina/goecs/entity"
+	"github.com/juan-medina/goecs/sparse"
 	"reflect"
 )
 
