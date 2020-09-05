@@ -293,6 +293,10 @@ func TestSlice_Clear(t *testing.T) {
 	expectSize(t, sl, 0)
 }
 
+func sortInts(a interface{}, b interface{}) bool {
+	return a.(int) < b.(int)
+}
+
 func TestSlice_Sort(t *testing.T) {
 	sl := NewSlice(3, 2).(*slice)
 
@@ -303,11 +307,17 @@ func TestSlice_Sort(t *testing.T) {
 
 	expectEquals(t, sl, []interface{}{3, 1, 4, 2})
 
-	sl.Sort(func(a interface{}, b interface{}) bool {
-		return a.(int) < b.(int)
-	})
+	sl.Sort(sortInts)
 
 	expectEquals(t, sl, []interface{}{1, 2, 3, 4})
+
+	_ = sl.Remove(1)
+	_ = sl.Remove(2)
+	_ = sl.Remove(3)
+
+	sl.Sort(sortInts)
+
+	expectEquals(t, sl, []interface{}{4})
 }
 
 func TestSlice_AssureCapacity(t *testing.T) {
