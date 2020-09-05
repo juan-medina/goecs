@@ -309,3 +309,63 @@ func TestSlice_Sort(t *testing.T) {
 
 	expectEquals(t, sl, []interface{}{1, 2, 3, 4})
 }
+
+func TestSlice_AssureCapacity(t *testing.T) {
+	sl := NewSlice(3, 2).(*slice)
+
+	sl.AssureCapacity(8)
+
+	expectCapacityGrow(t, sl, 9, 2)
+}
+
+func TestSlice_Copy(t *testing.T) {
+	sl1 := NewSlice(3, 2).(*slice)
+	sl2 := NewSlice(3, 5).(*slice)
+
+	sl1.Add(1)
+	sl1.Add(2)
+	sl1.Add(3)
+	sl1.Add(4)
+
+	sl2.Add(5)
+
+	expectEquals(t, sl1, []interface{}{1, 2, 3, 4})
+	expectSize(t, sl1, 4)
+	expectCapacityGrow(t, sl1, 5, 2)
+
+	expectSize(t, sl2, 1)
+	expectCapacityGrow(t, sl2, 3, 5)
+
+	sl1.Copy(sl2)
+
+	expectEquals(t, sl2, []interface{}{5, 1, 2, 3, 4})
+
+	expectSize(t, sl2, 5)
+	expectCapacityGrow(t, sl2, 8, 5)
+}
+
+func TestSlice_Replace(t *testing.T) {
+	sl1 := NewSlice(3, 2).(*slice)
+	sl2 := NewSlice(3, 5).(*slice)
+
+	sl1.Add(1)
+	sl1.Add(2)
+	sl1.Add(3)
+	sl1.Add(4)
+
+	sl2.Add(5)
+
+	expectEquals(t, sl1, []interface{}{1, 2, 3, 4})
+	expectSize(t, sl1, 4)
+	expectCapacityGrow(t, sl1, 5, 2)
+
+	expectSize(t, sl2, 1)
+	expectCapacityGrow(t, sl2, 3, 5)
+
+	sl1.Replace(sl2)
+
+	expectEquals(t, sl2, []interface{}{1, 2, 3, 4})
+
+	expectSize(t, sl2, 4)
+	expectCapacityGrow(t, sl2, 8, 5)
+}

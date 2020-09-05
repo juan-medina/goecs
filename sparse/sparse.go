@@ -53,6 +53,14 @@ type Slice interface {
 	Size() int
 	// Iterator returns a new sparse.Iterator for sparse.Slice
 	Iterator() Iterator
+	// AssureCapacity grows the Slice until the desired capacity is meet
+	AssureCapacity(capacity int)
+	// Sort a sparse.Slice in place using a less function
+	Sort(less func(a interface{}, b interface{}) bool)
+	// Copy makes a copy of this Slice into dest
+	Copy(dest Slice)
+	// Replace replace dest content with this Slice contents
+	Replace(dest Slice)
 }
 
 type item struct {
@@ -172,6 +180,28 @@ func (ss *slice) Sort(less func(a interface{}, b interface{}) bool) {
 			return less(a.ref, b.ref)
 		}
 	})
+}
+
+// AssureCapacity grows the slice until the desired capacity is meet
+func (ss *slice) AssureCapacity(capacity int) {
+	for ss.capacity < capacity {
+		ss.growCapacity()
+	}
+}
+
+// Copy makes a copy of this Slice into dest
+func (ss slice) Copy(dest Slice) {
+	dest.AssureCapacity(ss.capacity)
+
+	for it := ss.Iterator(); it != nil; it = it.Next() {
+		dest.Add(it.Value())
+	}
+}
+
+// Replace replace dest content with this Slice contents
+func (ss slice) Replace(dest Slice) {
+	dest.Clear()
+	ss.Copy(dest)
 }
 
 // NewSlice creates a new sparse.Slice with the given capacity and grow
