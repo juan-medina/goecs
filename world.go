@@ -172,7 +172,7 @@ func (world *World) sendSignals(delta float32) error {
 	return nil
 }
 
-func (world World) sortSystemsByPriority(a interface{}, b interface{}) bool {
+func (world World) sortSystemsByPriority(a, b interface{}) bool {
 	first := a.(systemWithPriority)
 	second := b.(systemWithPriority)
 	if first.priority == second.priority {
@@ -181,7 +181,7 @@ func (world World) sortSystemsByPriority(a interface{}, b interface{}) bool {
 	return first.priority > second.priority
 }
 
-func (world World) sortListenersByPriority(a interface{}, b interface{}) bool {
+func (world World) sortListenersByPriority(a, b interface{}) bool {
 	first := a.(listenerWithPriority)
 	second := b.(listenerWithPriority)
 	if first.priority == second.priority {

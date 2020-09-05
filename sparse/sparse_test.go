@@ -293,7 +293,7 @@ func TestSlice_Clear(t *testing.T) {
 	expectSize(t, sl, 0)
 }
 
-func sortInts(a interface{}, b interface{}) bool {
+func sortInts(a, b interface{}) bool {
 	return a.(int) < b.(int)
 }
 

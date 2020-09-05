@@ -168,7 +168,7 @@ func (ss slice) find(ref interface{}) (int, error) {
 }
 
 // Sort a sparse.Slice in place using a less function
-func (ss *slice) Sort(less func(a interface{}, b interface{}) bool) {
+func (ss *slice) Sort(less func(a, b interface{}) bool) {
 	sort.Slice(ss.items, func(i, j int) bool {
 		a := ss.items[i]
 		b := ss.items[j]
