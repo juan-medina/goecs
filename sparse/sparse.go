@@ -23,7 +23,10 @@
 // Package sparse provides the creation of sparse.Slice via sparse.NewSlice
 package sparse
 
-import "errors"
+import (
+	"errors"
+	"sort"
+)
 
 var (
 	// ErrItemNotFound is the error when we could not find an item
@@ -95,7 +98,8 @@ func (ss *slice) Add(ref interface{}) {
 	}
 
 	ss.growCapacity()
-	ni := ss.capacity - 1
+	ss.size++
+	ni := ss.size - 1
 	ss.items[ni].ref = ref
 	ss.items[ni].valid = true
 }
@@ -141,11 +145,7 @@ func (ss *slice) initialize() {
 
 func (ss *slice) growCapacity() {
 	ss.capacity += ss.grow
-	newItems := make([]item, ss.capacity)
-	for i, si := range ss.items {
-		newItems[i] = si
-	}
-	ss.items = newItems
+	ss.items = append(ss.items, make([]item, ss.grow)...)
 }
 
 func (ss slice) find(ref interface{}) (int, error) {
@@ -157,6 +157,21 @@ func (ss slice) find(ref interface{}) (int, error) {
 		}
 	}
 	return 0, ErrItemNotFound
+}
+
+// Sort a sparse.Slice in place using a less function
+func (ss *slice) Sort(less func(a interface{}, b interface{}) bool) {
+	sort.Slice(ss.items, func(i, j int) bool {
+		a := ss.items[i]
+		b := ss.items[j]
+		if !a.valid {
+			return false
+		} else if !b.valid {
+			return true
+		} else {
+			return less(a.ref, b.ref)
+		}
+	})
 }
 
 // NewSlice creates a new sparse.Slice with the given capacity and grow

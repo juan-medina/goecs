@@ -81,6 +81,21 @@ func expectSize(t *testing.T, sl *slice, size int) {
 	}
 }
 
+func expectEquals(t *testing.T, sl *slice, expect []interface{}) {
+	t.Helper()
+
+	got := make([]interface{}, sl.size)
+
+	i := 0
+	for it := sl.Iterator(); it != nil; it = it.Next() {
+		got[i] = it.Value()
+		i++
+	}
+	if !reflect.DeepEqual(got, expect) {
+		t.Fatalf("error in slice equals got %d, want %d", got, expect)
+	}
+}
+
 func TestNewSlice(t *testing.T) {
 	sl := NewSlice(5, 3).(*slice)
 
@@ -252,6 +267,15 @@ func TestSlice_Size(t *testing.T) {
 
 	sl.Add(4)
 	expectSize(t, sl, 1)
+
+	sl.Add(5)
+	expectSize(t, sl, 2)
+
+	sl.Add(6)
+	expectSize(t, sl, 3)
+
+	sl.Add(7)
+	expectSize(t, sl, 4)
 }
 
 func TestSlice_Clear(t *testing.T) {
@@ -267,4 +291,21 @@ func TestSlice_Clear(t *testing.T) {
 	sl.Clear()
 
 	expectSize(t, sl, 0)
+}
+
+func TestSlice_Sort(t *testing.T) {
+	sl := NewSlice(3, 2).(*slice)
+
+	sl.Add(3)
+	sl.Add(1)
+	sl.Add(4)
+	sl.Add(2)
+
+	expectEquals(t, sl, []interface{}{3, 1, 4, 2})
+
+	sl.Sort(func(a interface{}, b interface{}) bool {
+		return a.(int) < b.(int)
+	})
+
+	expectEquals(t, sl, []interface{}{1, 2, 3, 4})
 }
