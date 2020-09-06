@@ -48,10 +48,15 @@ type listenerWithPriority struct {
 }
 
 const (
-	defaultPriority          = int32(0)
-	signalsInitialCapacity   = 100
-	systemsInitialCapacity   = 100
-	listenersInitialCapacity = 100
+	defaultPriority = int32(0)
+)
+
+// Default values for Default()
+const (
+	DefaultSignalsInitialCapacity   = 20   // Default Signals initial capacity
+	DefaultSystemsInitialCapacity   = 50   // Default System initial capacity
+	DefaultListenersInitialCapacity = 50   // Default Listener initial capacity
+	DefaultEntitiesInitialCapacity  = 2000 // Default Entity initial capacity
 )
 
 var (
@@ -222,13 +227,31 @@ func (world *World) Clear() {
 	world.View.Clear()
 }
 
-// New creates a new World
-func New() *World {
+// Default creates a default World with a initial capacity
+//  const (
+//  	DefaultSignalsInitialCapacity   = 20   // Default Signals initial capacity
+//  	DefaultSystemsInitialCapacity   = 50   // Default System initial capacity
+//  	DefaultListenersInitialCapacity = 50   // Default Listener initial capacity
+//  	DefaultEntitiesInitialCapacity  = 2000 // Default Entity initial capacity
+//  )
+func Default() *World {
+	return New(
+		DefaultEntitiesInitialCapacity,
+		DefaultSystemsInitialCapacity,
+		DefaultListenersInitialCapacity,
+		DefaultSignalsInitialCapacity,
+	)
+}
+
+// New creates World with a giving initial capacity of entities, systems, listeners and signals
+//
+// Since those elements are sparse.Slice the will grow dynamically
+func New(entities, systems, listeners, signals int) *World {
 	return &World{
-		View:      NewView(),
-		systems:   sparse.NewSlice(systemsInitialCapacity),
-		listeners: sparse.NewSlice(listenersInitialCapacity),
-		signals:   sparse.NewSlice(signalsInitialCapacity),
-		toSend:    sparse.NewSlice(signalsInitialCapacity),
+		View:      NewView(entities),
+		systems:   sparse.NewSlice(systems),
+		listeners: sparse.NewSlice(listeners),
+		signals:   sparse.NewSlice(signals),
+		toSend:    sparse.NewSlice(signals),
 	}
 }

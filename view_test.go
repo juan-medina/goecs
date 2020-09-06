@@ -48,7 +48,7 @@ func expectViewPositions(t *testing.T, view *goecs.View, want []Pos) {
 }
 
 func TestNewView(t *testing.T) {
-	view := goecs.NewView()
+	view := goecs.NewView(goecs.DefaultEntitiesInitialCapacity)
 	got := view.Size()
 	expect := 0
 
@@ -58,7 +58,7 @@ func TestNewView(t *testing.T) {
 }
 
 func TestView_Add(t *testing.T) {
-	view := goecs.NewView()
+	view := goecs.NewView(goecs.DefaultEntitiesInitialCapacity)
 
 	view.AddEntity(
 		Pos{X: 1, Y: 1},
@@ -74,7 +74,7 @@ func TestView_Add(t *testing.T) {
 }
 
 func TestView_Size(t *testing.T) {
-	view := goecs.NewView()
+	view := goecs.NewView(goecs.DefaultEntitiesInitialCapacity)
 
 	view.AddEntity(
 		Pos{X: 1, Y: 1},
@@ -106,7 +106,7 @@ func entitiesEqual(a, b []*goecs.Entity) bool {
 }
 
 func TestView_Iterator(t *testing.T) {
-	view := goecs.NewView()
+	view := goecs.NewView(goecs.DefaultEntitiesInitialCapacity)
 
 	ent1 := view.AddEntity(
 		Pos{X: 1, Y: 1},
@@ -161,7 +161,7 @@ func TestView_Iterator(t *testing.T) {
 }
 
 func TestView_Remove(t *testing.T) {
-	view := goecs.NewView()
+	view := goecs.NewView(goecs.DefaultEntitiesInitialCapacity)
 
 	ent1 := view.AddEntity(
 		Pos{X: 1, Y: 1},
@@ -197,7 +197,7 @@ func TestView_Remove(t *testing.T) {
 }
 
 func TestView_String(t *testing.T) {
-	view := goecs.NewView()
+	view := goecs.NewView(goecs.DefaultEntitiesInitialCapacity)
 
 	view.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
 	view.AddEntity(Pos{X: 2, Y: 2})
@@ -211,7 +211,7 @@ func TestView_String(t *testing.T) {
 }
 
 func TestView_Clear(t *testing.T) {
-	view := goecs.NewView()
+	view := goecs.NewView(goecs.DefaultEntitiesInitialCapacity)
 
 	view.AddEntity(Pos{X: 3, Y: 3}).Add(Vel{X: 4, Y: 4})
 	view.AddEntity(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
@@ -240,7 +240,7 @@ func sortByPosY(a, b *goecs.Entity) bool {
 }
 
 func TestView_Sort(t *testing.T) {
-	view := goecs.NewView()
+	view := goecs.NewView(goecs.DefaultEntitiesInitialCapacity)
 
 	view.AddEntity(Pos{X: 3, Y: -3}).Add(Vel{X: 4, Y: 4})
 	view.AddEntity(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})

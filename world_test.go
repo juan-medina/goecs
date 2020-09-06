@@ -97,7 +97,7 @@ func FailureListener(_ *goecs.World, _ interface{}, _ float32) error {
 
 func TestWorld_Update(t *testing.T) {
 	t.Run("update single system should work", func(t *testing.T) {
-		world := goecs.New()
+		world := goecs.Default()
 		world.AddSystem(HMovementSystem)
 
 		world.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
@@ -114,7 +114,7 @@ func TestWorld_Update(t *testing.T) {
 	})
 
 	t.Run("update multiple systems should work", func(t *testing.T) {
-		world := goecs.New()
+		world := goecs.Default()
 		world.AddSystem(HMovementSystem)
 		world.AddSystem(VMovementSystem)
 
@@ -134,7 +134,7 @@ func TestWorld_Update(t *testing.T) {
 
 func TestWorld_UpdateGroup(t *testing.T) {
 	t.Run("update single system should work", func(t *testing.T) {
-		world := goecs.New()
+		world := goecs.Default()
 		world.AddSystem(HMovementSystem)
 
 		world.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
@@ -151,7 +151,7 @@ func TestWorld_UpdateGroup(t *testing.T) {
 	})
 
 	t.Run("update multiple systems should work", func(t *testing.T) {
-		world := goecs.New()
+		world := goecs.Default()
 		world.AddSystem(HMovementSystem)
 		world.AddSystem(VMovementSystem)
 
@@ -175,7 +175,7 @@ func expectWorldPositions(t *testing.T, world *goecs.World, want []Pos) {
 }
 
 func TestWorld_String(t *testing.T) {
-	world := goecs.New()
+	world := goecs.Default()
 	world.AddSystem(HMovementSystem)
 	world.AddSystem(VMovementSystem)
 	world.AddListener(ResetHListener)
@@ -194,7 +194,7 @@ func TestWorld_String(t *testing.T) {
 }
 
 func TestWorld_Update_Error(t *testing.T) {
-	world := goecs.New()
+	world := goecs.Default()
 	world.AddSystem(FailureSystem)
 	world.AddSystem(HMovementSystem)
 	world.AddSystem(VMovementSystem)
@@ -213,7 +213,7 @@ func TestWorld_Update_Error(t *testing.T) {
 }
 
 func TestWorld_Signal(t *testing.T) {
-	world := goecs.New()
+	world := goecs.Default()
 	world.AddSystem(HMovementSystem)
 	world.AddSystem(VMovementSystem)
 	world.AddListener(ResetHListener)
@@ -250,7 +250,7 @@ func TestWorld_Signal(t *testing.T) {
 }
 
 func TestWorld_SignalMultiple(t *testing.T) {
-	world := goecs.New()
+	world := goecs.Default()
 
 	type nunSignal struct {
 		num int
@@ -281,7 +281,7 @@ func TestWorld_SignalMultiple(t *testing.T) {
 }
 
 func TestWorld_Signal_Error(t *testing.T) {
-	world := goecs.New()
+	world := goecs.Default()
 	world.AddListener(FailureListener)
 	world.AddSystem(HMovementSystem)
 	world.AddSystem(VMovementSystem)
@@ -396,7 +396,7 @@ func TestWorld_AddSystemWithPriority(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			systemCalls = make([]string, 0)
-			world := goecs.New()
+			world := goecs.Default()
 
 			tc.setup(world)
 
@@ -411,7 +411,7 @@ func TestWorld_AddSystemWithPriority(t *testing.T) {
 }
 
 func TestWorld_Clear(t *testing.T) {
-	world := goecs.New()
+	world := goecs.Default()
 
 	world.AddSystem(HMovementSystem)
 	world.AddSystem(VMovementSystem)
@@ -454,7 +454,7 @@ func newConstantVelocity(vel Vel) constantVelocity {
 }
 
 func Test_SystemsInStruct(t *testing.T) {
-	world := goecs.New()
+	world := goecs.Default()
 
 	world.AddEntity(Pos{X: 0, Y: 0})
 	world.AddEntity(Pos{X: 2, Y: 2})
@@ -473,7 +473,7 @@ func Test_SystemsInStruct(t *testing.T) {
 }
 
 func TestWorld_Sort(t *testing.T) {
-	world := goecs.New()
+	world := goecs.Default()
 
 	world.AddEntity(Pos{X: 3, Y: -3}).Add(Vel{X: 4, Y: 4})
 	world.AddEntity(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})

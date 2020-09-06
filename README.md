@@ -23,7 +23,7 @@ For a more in deep read on this topic I could recommend this [article](https://m
 
 ## Example
 
-[Run it on the Go Playground](https://play.golang.org/p/oVCOy1wXBS9)
+[Run it on the Go Playground](https://play.golang.org/p/wWRWRYuHvlV)
 ```go
 package main
 
@@ -36,7 +36,7 @@ import (
 // Simple Usage
 func main() {
 	// creates the world
-	world := goecs.New()
+	world := goecs.Default()
 
 	// add our movement system
 	world.AddSystem(MovementSystem)

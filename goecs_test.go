@@ -31,7 +31,7 @@ import (
 // Simple Usage
 func Example() {
 	// creates the world
-	world := goecs.New()
+	world := goecs.Default()
 
 	// add our movement system
 	world.AddSystem(MovementSystem)

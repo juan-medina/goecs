@@ -28,10 +28,6 @@ import (
 	"reflect"
 )
 
-const (
-	entitiesInitialCapacity = 2000
-)
-
 // Iterator for view
 type Iterator interface {
 	// Next returns next element
@@ -129,9 +125,9 @@ func (vw *View) Sort(less func(a, b *Entity) bool) {
 	})
 }
 
-// NewView creates a new empty View
-func NewView() *View {
+// NewView creates a new empty View with a given capacity
+func NewView(capacity int) *View {
 	return &View{
-		entities: sparse.NewSlice(entitiesInitialCapacity),
+		entities: sparse.NewSlice(capacity),
 	}
 }
