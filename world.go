@@ -50,11 +50,8 @@ type listenerWithPriority struct {
 const (
 	defaultPriority          = int32(0)
 	signalsInitialCapacity   = 100
-	signalsCapacityGrow      = signalsInitialCapacity / 4
 	systemsInitialCapacity   = 100
-	systemsCapacityGrow      = systemsInitialCapacity / 4
 	listenersInitialCapacity = 100
-	listenersCapacityGrow    = systemsInitialCapacity / 4
 )
 
 var (
@@ -229,9 +226,9 @@ func (world *World) Clear() {
 func New() *World {
 	return &World{
 		View:      NewView(),
-		systems:   sparse.NewSlice(systemsInitialCapacity, systemsCapacityGrow),
-		listeners: sparse.NewSlice(listenersInitialCapacity, listenersCapacityGrow),
-		signals:   sparse.NewSlice(signalsInitialCapacity, signalsCapacityGrow),
-		toSend:    sparse.NewSlice(signalsInitialCapacity, signalsCapacityGrow),
+		systems:   sparse.NewSlice(systemsInitialCapacity),
+		listeners: sparse.NewSlice(listenersInitialCapacity),
+		signals:   sparse.NewSlice(signalsInitialCapacity),
+		toSend:    sparse.NewSlice(signalsInitialCapacity),
 	}
 }

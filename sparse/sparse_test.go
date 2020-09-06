@@ -97,14 +97,14 @@ func expectEquals(t *testing.T, sl *slice, expect []interface{}) {
 }
 
 func TestNewSlice(t *testing.T) {
-	sl := NewSlice(5, 3).(*slice)
+	sl := NewSlice(5).(*slice)
 
-	expectCapacityGrow(t, sl, 5, 3)
+	expectCapacityGrow(t, sl, 5, 5)
 }
 
 func TestSlice_find(t *testing.T) {
 
-	sl := NewSlice(3, 2).(*slice)
+	sl := NewSlice(3).(*slice)
 
 	sl.Add(1)
 
@@ -113,63 +113,63 @@ func TestSlice_find(t *testing.T) {
 }
 
 func TestSlice_Add(t *testing.T) {
-	sl := NewSlice(3, 2).(*slice)
+	sl := NewSlice(3).(*slice)
 
 	sl.Add(1)
 	sl.Add(2)
 	sl.Add(3)
 
-	expectCapacityGrow(t, sl, 3, 2)
+	expectCapacityGrow(t, sl, 3, 3)
 
 	expectFound(t, sl, 1, 2, 3)
 	expectNotFound(t, sl, 4, 5, 6)
 
 	sl.Add(4)
 
-	expectCapacityGrow(t, sl, 5, 2)
+	expectCapacityGrow(t, sl, 6, 2)
 
 	expectFound(t, sl, 1, 2, 3, 4)
 	expectNotFound(t, sl, 5, 6)
 
 	sl.Add(5)
 
-	expectCapacityGrow(t, sl, 5, 2)
+	expectCapacityGrow(t, sl, 6, 2)
 
 	expectFound(t, sl, 1, 2, 3, 4, 5)
 	expectNotFound(t, sl, 6)
 
 	sl.Add(6)
 
-	expectCapacityGrow(t, sl, 7, 2)
+	expectCapacityGrow(t, sl, 6, 2)
 
 	expectFound(t, sl, 1, 2, 3, 4, 5, 6)
 }
 
 func TestSlice_Remove(t *testing.T) {
-	sl := NewSlice(3, 2).(*slice)
+	sl := NewSlice(3).(*slice)
 
 	sl.Add(1)
 	sl.Add(2)
 	sl.Add(3)
 
-	expectCapacityGrow(t, sl, 3, 2)
+	expectCapacityGrow(t, sl, 3, 3)
 	expectFound(t, sl, 1, 2, 3)
 
 	_ = sl.Remove(2)
 
-	expectCapacityGrow(t, sl, 3, 2)
+	expectCapacityGrow(t, sl, 3, 3)
 	expectFound(t, sl, 1, 3)
 	expectNotFound(t, sl, 2)
 
 	sl.Add(2)
-	expectCapacityGrow(t, sl, 3, 2)
+	expectCapacityGrow(t, sl, 3, 3)
 	expectFound(t, sl, 1, 2, 3)
 
 	sl.Add(4)
 	sl.Add(5)
 	sl.Add(6)
 
-	expectCapacityGrow(t, sl, 7, 2)
+	expectCapacityGrow(t, sl, 6, 2)
 	expectFound(t, sl, 1, 2, 3, 4, 5, 6)
 
 	_ = sl.Remove(3)
@@ -180,7 +180,7 @@ func TestSlice_Remove(t *testing.T) {
 	sl.Add(9)
 	sl.Add(10)
 
-	expectCapacityGrow(t, sl, 9, 2)
+	expectCapacityGrow(t, sl, 8, 3)
 	expectFound(t, sl, 1, 2, 4, 6, 7, 8, 9, 10)
 	expectNotFound(t, sl, 3, 5)
 
@@ -198,7 +198,7 @@ func TestSlice_Remove(t *testing.T) {
 }
 
 func TestSlice_Iterator(t *testing.T) {
-	sl := NewSlice(3, 2).(*slice)
+	sl := NewSlice(3).(*slice)
 
 	sl.Add(1)
 	sl.Add(2)
@@ -248,7 +248,7 @@ func TestSlice_Iterator(t *testing.T) {
 
 func TestSlice_Size(t *testing.T) {
 
-	sl := NewSlice(3, 2).(*slice)
+	sl := NewSlice(3).(*slice)
 
 	sl.Add(1)
 	sl.Add(2)
@@ -279,7 +279,7 @@ func TestSlice_Size(t *testing.T) {
 }
 
 func TestSlice_Clear(t *testing.T) {
-	sl := NewSlice(3, 2).(*slice)
+	sl := NewSlice(3).(*slice)
 
 	sl.Add(1)
 	sl.Add(2)
@@ -298,7 +298,7 @@ func sortInts(a, b interface{}) bool {
 }
 
 func TestSlice_Sort(t *testing.T) {
-	sl := NewSlice(3, 2).(*slice)
+	sl := NewSlice(3).(*slice)
 
 	sl.Add(3)
 	sl.Add(1)
@@ -321,16 +321,16 @@ func TestSlice_Sort(t *testing.T) {
 }
 
 func TestSlice_AssureCapacity(t *testing.T) {
-	sl := NewSlice(3, 2).(*slice)
+	sl := NewSlice(3).(*slice)
 
 	sl.AssureCapacity(8)
 
-	expectCapacityGrow(t, sl, 9, 2)
+	expectCapacityGrow(t, sl, 8, 3)
 }
 
 func TestSlice_Copy(t *testing.T) {
-	sl1 := NewSlice(3, 2).(*slice)
-	sl2 := NewSlice(3, 5).(*slice)
+	sl1 := NewSlice(3).(*slice)
+	sl2 := NewSlice(3).(*slice)
 
 	sl1.Add(1)
 	sl1.Add(2)
@@ -341,22 +341,22 @@ func TestSlice_Copy(t *testing.T) {
 
 	expectEquals(t, sl1, []interface{}{1, 2, 3, 4})
 	expectSize(t, sl1, 4)
-	expectCapacityGrow(t, sl1, 5, 2)
+	expectCapacityGrow(t, sl1, 6, 2)
 
 	expectSize(t, sl2, 1)
-	expectCapacityGrow(t, sl2, 3, 5)
+	expectCapacityGrow(t, sl2, 3, 3)
 
 	sl1.Copy(sl2)
 
 	expectEquals(t, sl2, []interface{}{5, 1, 2, 3, 4})
 
 	expectSize(t, sl2, 5)
-	expectCapacityGrow(t, sl2, 8, 5)
+	expectCapacityGrow(t, sl2, 6, 2)
 }
 
 func TestSlice_Replace(t *testing.T) {
-	sl1 := NewSlice(3, 2).(*slice)
-	sl2 := NewSlice(3, 5).(*slice)
+	sl1 := NewSlice(3).(*slice)
+	sl2 := NewSlice(3).(*slice)
 
 	sl1.Add(1)
 	sl1.Add(2)
@@ -367,15 +367,46 @@ func TestSlice_Replace(t *testing.T) {
 
 	expectEquals(t, sl1, []interface{}{1, 2, 3, 4})
 	expectSize(t, sl1, 4)
-	expectCapacityGrow(t, sl1, 5, 2)
+	expectCapacityGrow(t, sl1, 6, 2)
 
 	expectSize(t, sl2, 1)
-	expectCapacityGrow(t, sl2, 3, 5)
+	expectCapacityGrow(t, sl2, 3, 3)
 
 	sl1.Replace(sl2)
 
 	expectEquals(t, sl2, []interface{}{1, 2, 3, 4})
 
 	expectSize(t, sl2, 4)
-	expectCapacityGrow(t, sl2, 8, 5)
+	expectCapacityGrow(t, sl2, 6, 2)
+}
+
+func TestSlice_Grow(t *testing.T) {
+	sl := NewSlice(100).(*slice)
+
+	expectCapacityGrow(t, sl, 100, 100)
+	expectSize(t, sl, 0)
+
+	for i := 0; i < 100; i++ {
+		sl.Add(i)
+	}
+
+	expectCapacityGrow(t, sl, 100, 100)
+	expectSize(t, sl, 100)
+
+	sl.Add(11)
+
+	expectCapacityGrow(t, sl, 200, 51)
+	expectSize(t, sl, 101)
+
+	for i := 0; i < 99; i++ {
+		sl.Add(i)
+	}
+
+	expectCapacityGrow(t, sl, 200, 51)
+	expectSize(t, sl, 200)
+
+	sl.Add(21)
+
+	expectCapacityGrow(t, sl, 251, 63)
+	expectSize(t, sl, 201)
 }

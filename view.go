@@ -29,8 +29,7 @@ import (
 )
 
 const (
-	entitiesCapacity = 2000
-	entitiesGrow     = entitiesCapacity / 4
+	entitiesInitialCapacity = 2000
 )
 
 // Iterator for view
@@ -133,6 +132,6 @@ func (vw *View) Sort(less func(a, b *Entity) bool) {
 // NewView creates a new empty View
 func NewView() *View {
 	return &View{
-		entities: sparse.NewSlice(entitiesCapacity, entitiesGrow),
+		entities: sparse.NewSlice(entitiesInitialCapacity),
 	}
 }
