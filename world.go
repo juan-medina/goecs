@@ -24,9 +24,7 @@ package goecs
 
 import (
 	"fmt"
-	"github.com/juan-medina/goecs/sparse"
 	"reflect"
-	"runtime"
 )
 
 const (
@@ -41,15 +39,11 @@ const (
 	DefaultEntitiesInitialCapacity  = 2000 // Default Entity initial capacity
 )
 
-var (
-	lastSystemID = int64(0)
-)
-
 // World is a view.View that contains the Entity and System of our ECS
 type World struct {
 	*View
-	systems       sparse.Slice   // sparse.Slice of systemWithPriority
-	subscriptions *Subscriptions // subscriptions of Listeners to signals
+	systems       *Systems       // systems registration of System
+	subscriptions *Subscriptions // subscriptions of Listener to signals
 }
 
 // String get a string representation of our World
@@ -58,18 +52,9 @@ func (world World) String() string {
 
 	result += fmt.Sprintf("World{view: %v, systems: [", world.View)
 
-	str := ""
-	for it := world.systems.Iterator(); it != nil; it = it.Next() {
-		s := it.Value().(systemWithPriority)
-		if str != "" {
-			str += ","
-		}
-		name := runtime.FuncForPC(reflect.ValueOf(s.system).Pointer()).Name()
-		str += fmt.Sprintf("{%s}", name)
-	}
-	str += "]"
+	result += world.systems.String() + "], "
 
-	result += str + " subscriptions: [" + world.subscriptions.String() + "]"
+	result += " subscriptions: [" + world.subscriptions.String() + "]"
 
 	result += "}"
 
@@ -83,14 +68,7 @@ func (world *World) AddSystem(sys System) {
 
 // AddSystemWithPriority adds the given System to the world with a priority
 func (world *World) AddSystemWithPriority(sys System, priority int32) {
-	world.systems.Add(systemWithPriority{
-		system:   sys,
-		priority: priority,
-		id:       lastSystemID,
-	})
-	lastSystemID++
-	// sort systems, is better to keep them sorted that sort them on update
-	world.systems.Sort(world.sortSystemsByPriority)
+	world.systems.Register(sys, priority)
 }
 
 // AddListener adds the given Listener to the world
@@ -103,24 +81,11 @@ func (world *World) AddListenerWithPriority(lis Listener, priority int32, signal
 	world.subscriptions.Subscribe(lis, priority, signals...)
 }
 
-func (world World) sortSystemsByPriority(a, b interface{}) bool {
-	first := a.(systemWithPriority)
-	second := b.(systemWithPriority)
-	if first.priority == second.priority {
-		return first.id < second.id
-	}
-	return first.priority > second.priority
-}
-
 // Update ask to update the System and send the signals
 func (world *World) Update(delta float32) error {
-	var s systemWithPriority
-	// go trough the systems
-	for it := world.systems.Iterator(); it != nil; it = it.Next() {
-		s = it.Value().(systemWithPriority)
-		if err := s.system(world, delta); err != nil {
-			return err
-		}
+	// update the systems
+	if err := world.systems.Update(world, delta); err != nil {
+		return err
 	}
 
 	// update the subscriptions
@@ -164,7 +129,7 @@ func Default() *World {
 func New(entities, systems, listeners, signals int) *World {
 	return &World{
 		View:          NewView(entities),
-		systems:       sparse.NewSlice(systems),
+		systems:       NewSystems(systems),
 		subscriptions: NewSubscriptions(listeners, signals),
 	}
 }

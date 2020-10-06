@@ -184,8 +184,8 @@ func TestWorld_String(t *testing.T) {
 	world := goecs.Default()
 	world.AddSystem(HMovementSystem)
 	world.AddSystem(VMovementSystem)
-	world.AddListener(ResetHListener)
-	world.AddListener(ResetVListener)
+	world.AddListener(ResetHListener, resetSignalEventType)
+	world.AddListener(ResetVListener, resetSignalEventType)
 
 	world.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
 	world.AddEntity(Pos{X: 2, Y: 2})

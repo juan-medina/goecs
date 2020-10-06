@@ -23,7 +23,7 @@ For a more in deep read on this topic I could recommend this [article](https://m
 
 ## Example
 
-[Run it on the Go Playground](https://play.golang.org/p/wWRWRYuHvlV)
+[Run it on the Go Playground](https://play.golang.org/p/x5-HwGbRu5T)
 ```go
 package main
 
@@ -42,7 +42,7 @@ func main() {
 	world.AddSystem(MovementSystem)
 
 	// add a listener
-	world.AddListener(ChangePostListener)
+	world.AddListener(ChangePostListener, PosChangeSignalType)
 
 	// add a first entity
 	world.AddEntity(
@@ -134,6 +134,9 @@ type PosChangeSignal struct {
 	From Pos
 	To   Pos
 }
+
+// PosChangeSignalType is the type of the PosChangeSignal
+var PosChangeSignalType = reflect.TypeOf(PosChangeSignal{})
 ```
 This will output:
 

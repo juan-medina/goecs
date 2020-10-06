@@ -154,7 +154,7 @@ func (subs Subscriptions) String() string {
 			}
 			signals += v.Name()
 		}
-		str += fmt.Sprintf("{listener: %s, signals: {%s}}", name, signals)
+		str += fmt.Sprintf("{listener: %s, signals: [%s]}", name, signals)
 	}
 	return str
 }
