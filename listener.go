@@ -32,9 +32,6 @@ import (
 // Listener the get notified that a new signal has been received by World.Signal
 type Listener func(world *World, signal interface{}, delta float32) error
 
-// lastSubscriptionID to be used when sorted subscriptions
-var lastSubscriptionID = int64(0)
-
 // subscription hold the information of listener subscription
 type subscription struct {
 	listener Listener       // listener for this subscription
@@ -44,25 +41,28 @@ type subscription struct {
 }
 
 // newSubscription create a new subscription
-func newSubscription(listener Listener, priority int32, signals ...reflect.Type) *subscription {
-	lastSubscriptionID++
+func newSubscription(id int64, listener Listener, priority int32, signals ...reflect.Type) *subscription {
 	sub := &subscription{
+		id:       id,
 		listener: listener,
 		signals:  signals,
 		priority: priority,
-		id:       lastSubscriptionID,
 	}
 	return sub
 }
 
 // Subscriptions manage subscriptions of Listeners to signals
 type Subscriptions struct {
-	subscriptions sparse.Slice
+	subscriptions      sparse.Slice // subscriptions is an sparse.Slice of subscriptions
+	lastSubscriptionID int64        // lastSubscriptionID is the last subscription id
+	signals            sparse.Slice // sparse.Slice of signals
+	toSend             sparse.Slice // sparse.Slice of signals is a copy to signals to be send
 }
 
 // Subscribe adds a new subscription
 func (subs *Subscriptions) Subscribe(listener Listener, priority int32, signals ...reflect.Type) {
-	sub := newSubscription(listener, priority, signals...)
+	subs.lastSubscriptionID++
+	sub := newSubscription(subs.lastSubscriptionID, listener, priority, signals...)
 	subs.subscriptions.Add(sub)
 	subs.subscriptions.Sort(subs.sortSubsByPriority)
 }
@@ -78,7 +78,7 @@ func (subs Subscriptions) sortSubsByPriority(a, b interface{}) bool {
 }
 
 // Process the subscriptions
-func (subs Subscriptions) Process(world *World, signal interface{}, delta float32) error {
+func (subs Subscriptions) process(world *World, signal interface{}, delta float32) error {
 	var err error
 	signalType := reflect.TypeOf(signal)
 	for it := subs.subscriptions.Iterator(); it != nil; it = it.Next() {
@@ -98,6 +98,41 @@ func (subs Subscriptions) Process(world *World, signal interface{}, delta float3
 // Clear the subscriptions
 func (subs *Subscriptions) Clear() {
 	subs.subscriptions.Clear()
+	subs.signals.Clear()
+	subs.toSend.Clear()
+}
+
+// Signal to be sent
+func (subs *Subscriptions) Signal(signal interface{}) error {
+	// add the signal
+	subs.signals.Add(signal)
+	return nil
+}
+
+// sendSignals send the pending signals to the listeners on the world
+func (subs *Subscriptions) sendSignals(world *World, delta float32) error {
+	// avoid to copy empty signals
+	if subs.signals.Size() == 0 {
+		return nil
+	}
+	// replace the signals to send, so we do not send the signals triggered by the current signals
+	subs.signals.Replace(subs.toSend)
+
+	// clear the hold so new signals will be here
+	subs.signals.Clear()
+
+	var err error
+	// get thee signals to send
+	for ite := subs.toSend.Iterator(); ite != nil; ite = ite.Next() {
+		if err = subs.process(world, ite.Value(), delta); err != nil {
+			return err
+		}
+	}
+
+	// clear the signals to be send
+	subs.toSend.Clear()
+
+	return nil
 }
 
 // String returns the string representation of the subscriptions
@@ -115,8 +150,10 @@ func (subs Subscriptions) String() string {
 }
 
 // NewSubscriptions creates a new Subscriptions
-func NewSubscriptions(listeners int) *Subscriptions {
+func NewSubscriptions(listeners, signals int) *Subscriptions {
 	return &Subscriptions{
 		subscriptions: sparse.NewSlice(listeners),
+		signals:       sparse.NewSlice(signals),
+		toSend:        sparse.NewSlice(signals),
 	}
 }

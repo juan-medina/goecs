@@ -50,8 +50,6 @@ type World struct {
 	*View
 	systems       sparse.Slice   // sparse.Slice of systemWithPriority
 	subscriptions *Subscriptions // subscriptions of Listeners to signals
-	signals       sparse.Slice   // sparse.Slice of signals
-	toSend        sparse.Slice   // sparse.Slice of signals is a copy to signals to be send
 }
 
 // String get a string representation of our World
@@ -105,32 +103,6 @@ func (world *World) AddListenerWithPriority(lis Listener, priority int32, signal
 	world.subscriptions.Subscribe(lis, priority, signals...)
 }
 
-// sendSignals send the pending signals to the System on the world
-func (world *World) sendSignals(delta float32) error {
-	// avoid to copy empty signals
-	if world.signals.Size() == 0 {
-		return nil
-	}
-	// replace the signals to send, so we do not send the signals triggered by the current signals
-	world.signals.Replace(world.toSend)
-
-	// clear the hold so new signals will be here
-	world.signals.Clear()
-
-	var err error
-	// get thee signals to send
-	for ite := world.toSend.Iterator(); ite != nil; ite = ite.Next() {
-		if err = world.subscriptions.Process(world, ite.Value(), delta); err != nil {
-			return err
-		}
-	}
-
-	// clear the signals to be send
-	world.toSend.Clear()
-
-	return nil
-}
-
 func (world World) sortSystemsByPriority(a, b interface{}) bool {
 	first := a.(systemWithPriority)
 	second := b.(systemWithPriority)
@@ -140,7 +112,7 @@ func (world World) sortSystemsByPriority(a, b interface{}) bool {
 	return first.priority > second.priority
 }
 
-// Update ask to update the System send the pending signals
+// Update ask to update the System and send the signals
 func (world *World) Update(delta float32) error {
 	var s systemWithPriority
 	// go trough the systems
@@ -151,7 +123,7 @@ func (world *World) Update(delta float32) error {
 		}
 	}
 
-	if err := world.sendSignals(delta); err != nil {
+	if err := world.subscriptions.sendSignals(world, delta); err != nil {
 		return err
 	}
 
@@ -160,18 +132,13 @@ func (world *World) Update(delta float32) error {
 
 // Signal to be sent
 func (world *World) Signal(signal interface{}) error {
-	// add the signal
-	world.signals.Add(signal)
-
-	return nil
+	return world.subscriptions.Signal(signal)
 }
 
 // Clear removes all System, Listener, Signals and Entity from the World
 func (world *World) Clear() {
 	world.systems.Clear()
 	world.subscriptions.Clear()
-	world.signals.Clear()
-	world.toSend.Clear()
 	world.View.Clear()
 }
 
@@ -198,8 +165,6 @@ func New(entities, systems, listeners, signals int) *World {
 	return &World{
 		View:          NewView(entities),
 		systems:       sparse.NewSlice(systems),
-		subscriptions: NewSubscriptions(listeners),
-		signals:       sparse.NewSlice(signals),
-		toSend:        sparse.NewSlice(signals),
+		subscriptions: NewSubscriptions(listeners, signals),
 	}
 }
