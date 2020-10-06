@@ -103,10 +103,9 @@ func (subs *Subscriptions) Clear() {
 }
 
 // Signal to be sent
-func (subs *Subscriptions) Signal(signal interface{}) error {
+func (subs *Subscriptions) Signal(signal interface{}) {
 	// add the signal
 	subs.signals.Add(signal)
-	return nil
 }
 
 // sendSignals send the pending signals to the listeners on the world

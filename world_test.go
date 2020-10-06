@@ -237,7 +237,7 @@ func TestWorld_Signal(t *testing.T) {
 		{X: 7, Y: 7},
 	})
 
-	_ = world.Signal(resetSignalEvent{})
+	world.Signal(resetSignalEvent{})
 	_ = world.Update(0)
 
 	expectWorldPositions(t, world, []Pos{
@@ -273,10 +273,10 @@ func TestWorld_SignalMultiple(t *testing.T) {
 		return nil
 	}, numSignalType)
 
-	_ = world.Signal(nunSignal{num: 1})
-	_ = world.Signal(nunSignal{num: 2})
-	_ = world.Signal(nunSignal{num: 3})
-	_ = world.Signal(nunSignal{num: 4})
+	world.Signal(nunSignal{num: 1})
+	world.Signal(nunSignal{num: 2})
+	world.Signal(nunSignal{num: 3})
+	world.Signal(nunSignal{num: 4})
 
 	_ = world.Update(0)
 
@@ -310,11 +310,7 @@ func TestWorld_Signal_Error(t *testing.T) {
 		{X: 7, Y: 7},
 	})
 
-	e = world.Signal(resetSignalEvent{})
-
-	if e != nil {
-		t.Fatalf("shoudl not get error but got %v", e)
-	}
+	world.Signal(resetSignalEvent{})
 
 	e = world.Update(0)
 
@@ -408,7 +404,7 @@ func TestWorld_AddSystemWithPriority(t *testing.T) {
 
 			tc.setup(world)
 
-			_ = world.Signal(dummySignal{})
+			world.Signal(dummySignal{})
 			_ = world.Update(0)
 
 			if !reflect.DeepEqual(systemCalls, tc.expect) {

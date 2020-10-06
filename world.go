@@ -131,8 +131,8 @@ func (world *World) Update(delta float32) error {
 }
 
 // Signal to be sent
-func (world *World) Signal(signal interface{}) error {
-	return world.subscriptions.Signal(signal)
+func (world *World) Signal(signal interface{}) {
+	world.subscriptions.Signal(signal)
 }
 
 // Clear removes all System, Listener, Signals and Entity from the World

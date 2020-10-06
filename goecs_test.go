@@ -93,9 +93,7 @@ func MovementSystem(world *goecs.World, delta float32) error {
 		}
 
 		// signal the change
-		if err := world.Signal(PosChangeSignal{From: pos, To: npos}); err != nil {
-			return err
-		}
+		world.Signal(PosChangeSignal{From: pos, To: npos})
 
 		// set the new pos
 		ent.Set(npos)
