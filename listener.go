@@ -29,26 +29,15 @@ import (
 	"runtime"
 )
 
-// Listener the get notified that a new signal has been received by World.Signal
+// Listener that get notified that a new signal has been received by World.Signal
 type Listener func(world *World, signal interface{}, delta float32) error
 
-// subscription hold the information of listener subscription
+// subscription hold the information of listener subscribed to signals with a priority and id
 type subscription struct {
 	listener Listener       // listener for this subscription
 	signals  []reflect.Type // signals that we are subscribed to
 	priority int32          // priority of this subscription
 	id       int64          // id of the subscription
-}
-
-// newSubscription create a new subscription
-func newSubscription(id int64, listener Listener, priority int32, signals ...reflect.Type) *subscription {
-	sub := &subscription{
-		id:       id,
-		listener: listener,
-		signals:  signals,
-		priority: priority,
-	}
-	return sub
 }
 
 // Subscriptions manage subscriptions of Listeners to signals
@@ -59,57 +48,39 @@ type Subscriptions struct {
 	toSend             sparse.Slice // sparse.Slice of signals is a copy to signals to be send
 }
 
-// Subscribe adds a new subscription
+// Subscribe adds a new subscription given a priority and set of signals types
 func (subs *Subscriptions) Subscribe(listener Listener, priority int32, signals ...reflect.Type) {
+	// increment the id
 	subs.lastSubscriptionID++
-	sub := newSubscription(subs.lastSubscriptionID, listener, priority, signals...)
-	subs.subscriptions.Add(sub)
+	// add the subscription
+	subs.subscriptions.Add(subscription{
+		id:       subs.lastSubscriptionID,
+		listener: listener,
+		signals:  signals,
+		priority: priority,
+	})
+	// keep the subscriptions sorted
 	subs.subscriptions.Sort(subs.sortSubsByPriority)
+}
+
+// Signal adds a signal to to be sent
+func (subs *Subscriptions) Signal(signal interface{}) {
+	// add the signal
+	subs.signals.Add(signal)
 }
 
 // sortSubsByPriority sorts by subscription priority, if equal by id
 func (subs Subscriptions) sortSubsByPriority(a, b interface{}) bool {
-	first := a.(*subscription)
-	second := b.(*subscription)
+	first := a.(subscription)
+	second := b.(subscription)
 	if first.priority == second.priority {
 		return first.id < second.id
 	}
 	return first.priority > second.priority
 }
 
-// Process the subscriptions
-func (subs Subscriptions) process(world *World, signal interface{}, delta float32) error {
-	var err error
-	signalType := reflect.TypeOf(signal)
-	for it := subs.subscriptions.Iterator(); it != nil; it = it.Next() {
-		sub := it.Value().(*subscription)
-		for _, t := range sub.signals {
-			if t == signalType {
-				if err = sub.listener(world, signal, delta); err != nil {
-					return err
-				}
-				break
-			}
-		}
-	}
-	return nil
-}
-
-// Clear the subscriptions
-func (subs *Subscriptions) Clear() {
-	subs.subscriptions.Clear()
-	subs.signals.Clear()
-	subs.toSend.Clear()
-}
-
-// Signal to be sent
-func (subs *Subscriptions) Signal(signal interface{}) {
-	// add the signal
-	subs.signals.Add(signal)
-}
-
-// sendSignals send the pending signals to the listeners on the world
-func (subs *Subscriptions) sendSignals(world *World, delta float32) error {
+// Update send the pending signals to the listeners on the world
+func (subs *Subscriptions) Update(world *World, delta float32) error {
 	// avoid to copy empty signals
 	if subs.signals.Size() == 0 {
 		return nil
@@ -134,16 +105,56 @@ func (subs *Subscriptions) sendSignals(world *World, delta float32) error {
 	return nil
 }
 
+// process the subscriptions for this signal
+func (subs Subscriptions) process(world *World, signal interface{}, delta float32) error {
+	var err error
+	// get the signal type
+	signalType := reflect.TypeOf(signal)
+	// iterate trough the subscriptions
+	for it := subs.subscriptions.Iterator(); it != nil; it = it.Next() {
+		// get te subscription value
+		sub := it.Value().(subscription)
+		// go to the signal that this subscription is listen to
+		for _, t := range sub.signals {
+			// if we listen to this signal type
+			if t == signalType {
+				// notify the listener, return error if happen
+				if err = sub.listener(world, signal, delta); err != nil {
+					return err
+				}
+				// we do not need to iterate further for this subscription
+				break
+			}
+		}
+	}
+	// no error happens
+	return nil
+}
+
+// Clear the subscriptions & signals
+func (subs *Subscriptions) Clear() {
+	subs.subscriptions.Clear()
+	subs.signals.Clear()
+	subs.toSend.Clear()
+}
+
 // String returns the string representation of the subscriptions
 func (subs Subscriptions) String() string {
 	str := ""
 	for it := subs.subscriptions.Iterator(); it != nil; it = it.Next() {
-		l := it.Value().(*subscription)
+		l := it.Value().(subscription)
 		if str != "" {
 			str += ","
 		}
 		name := runtime.FuncForPC(reflect.ValueOf(l.listener).Pointer()).Name()
-		str += fmt.Sprintf("{%s}", name)
+		signals := ""
+		for _, v := range l.signals {
+			if signals != "" {
+				signals += ","
+			}
+			signals += v.Name()
+		}
+		str += fmt.Sprintf("{listener: %s, signals: {%s}}", name, signals)
 	}
 	return str
 }

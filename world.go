@@ -123,10 +123,10 @@ func (world *World) Update(delta float32) error {
 		}
 	}
 
-	if err := world.subscriptions.sendSignals(world, delta); err != nil {
+	// update the subscriptions
+	if err := world.subscriptions.Update(world, delta); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -135,7 +135,7 @@ func (world *World) Signal(signal interface{}) {
 	world.subscriptions.Signal(signal)
 }
 
-// Clear removes all System, Listener, Signals and Entity from the World
+// Clear removes all System, Listener, Subscriptions and Entity from the World
 func (world *World) Clear() {
 	world.systems.Clear()
 	world.subscriptions.Clear()
