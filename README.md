@@ -23,7 +23,7 @@ For a more in deep read on this topic I could recommend this [article](https://m
 
 ## Example
 
-[Run it on the Go Playground](https://play.golang.org/p/x5-HwGbRu5T)
+[Run it on the Go Playground](https://play.golang.org/p/9urqRvY8u-v)
 ```go
 package main
 
@@ -90,9 +90,7 @@ func MovementSystem(world *goecs.World, delta float32) error {
 		}
 
 		// signal the change
-		if err := world.Signal(PosChangeSignal{From: pos, To: npos}); err != nil {
-			return err
-		}
+		world.Signal(PosChangeSignal{From: pos, To: npos})
 
 		// set the new pos
 		ent.Set(npos)
