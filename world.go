@@ -29,24 +29,6 @@ import (
 	"runtime"
 )
 
-// System get invoke with Update() from a World
-type System func(world *World, delta float32) error
-
-// Listener the get notified that a new signal has been received by World.Signal
-type Listener func(world *World, signal interface{}, delta float32) error
-
-type systemWithPriority struct {
-	system   System
-	priority int32
-	id       int64
-}
-
-type listenerWithPriority struct {
-	listener Listener
-	priority int32
-	id       int64
-}
-
 const (
 	defaultPriority = int32(0)
 )
@@ -60,17 +42,16 @@ const (
 )
 
 var (
-	lastSystemID   = int64(0)
-	lastListenerID = int64(0)
+	lastSystemID = int64(0)
 )
 
 // World is a view.View that contains the Entity and System of our ECS
 type World struct {
 	*View
-	systems   sparse.Slice // sparse.Slice of systemWithPriority
-	listeners sparse.Slice // sparse.Slice of listenerWithPriority
-	signals   sparse.Slice // sparse.Slice of signals
-	toSend    sparse.Slice // sparse.Slice of signals is a copy to signals to be send
+	systems       sparse.Slice   // sparse.Slice of systemWithPriority
+	subscriptions *Subscriptions // subscriptions of Listeners to signals
+	signals       sparse.Slice   // sparse.Slice of signals
+	toSend        sparse.Slice   // sparse.Slice of signals is a copy to signals to be send
 }
 
 // String get a string representation of our World
@@ -90,20 +71,9 @@ func (world World) String() string {
 	}
 	str += "]"
 
-	result += str + " listeners: ["
+	result += str + " subscriptions: [" + world.subscriptions.String() + "]"
 
-	str = ""
-	for it := world.listeners.Iterator(); it != nil; it = it.Next() {
-		l := it.Value().(listenerWithPriority)
-		if str != "" {
-			str += ","
-		}
-		name := runtime.FuncForPC(reflect.ValueOf(l.listener).Pointer()).Name()
-		str += fmt.Sprintf("{%s}", name)
-	}
-	str += "]"
-
-	result += str + "}"
+	result += "}"
 
 	return result
 }
@@ -126,20 +96,13 @@ func (world *World) AddSystemWithPriority(sys System, priority int32) {
 }
 
 // AddListener adds the given Listener to the world
-func (world *World) AddListener(lis Listener) {
-	world.AddListenerWithPriority(lis, defaultPriority)
+func (world *World) AddListener(lis Listener, signals ...reflect.Type) {
+	world.AddListenerWithPriority(lis, defaultPriority, signals...)
 }
 
 // AddListenerWithPriority adds the given Listener to the world with a priority
-func (world *World) AddListenerWithPriority(lis Listener, priority int32) {
-	world.listeners.Add(listenerWithPriority{
-		listener: lis,
-		priority: priority,
-		id:       lastListenerID,
-	})
-	lastListenerID++
-	// sort listeners, is better to keep them sorted that sort them on update
-	world.listeners.Sort(world.sortListenersByPriority)
+func (world *World) AddListenerWithPriority(lis Listener, priority int32, signals ...reflect.Type) {
+	world.subscriptions.Subscribe(lis, priority, signals...)
 }
 
 // sendSignals send the pending signals to the System on the world
@@ -154,17 +117,11 @@ func (world *World) sendSignals(delta float32) error {
 	// clear the hold so new signals will be here
 	world.signals.Clear()
 
-	var l listenerWithPriority
+	var err error
 	// get thee signals to send
 	for ite := world.toSend.Iterator(); ite != nil; ite = ite.Next() {
-		// range systems
-		for itl := world.listeners.Iterator(); itl != nil; itl = itl.Next() {
-			// get the listener
-			l = itl.Value().(listenerWithPriority)
-			// notify the signal to the listener
-			if err := l.listener(world, ite.Value(), delta); err != nil {
-				return err
-			}
+		if err = world.subscriptions.Process(world, ite.Value(), delta); err != nil {
+			return err
 		}
 	}
 
@@ -177,15 +134,6 @@ func (world *World) sendSignals(delta float32) error {
 func (world World) sortSystemsByPriority(a, b interface{}) bool {
 	first := a.(systemWithPriority)
 	second := b.(systemWithPriority)
-	if first.priority == second.priority {
-		return first.id < second.id
-	}
-	return first.priority > second.priority
-}
-
-func (world World) sortListenersByPriority(a, b interface{}) bool {
-	first := a.(listenerWithPriority)
-	second := b.(listenerWithPriority)
 	if first.priority == second.priority {
 		return first.id < second.id
 	}
@@ -221,7 +169,7 @@ func (world *World) Signal(signal interface{}) error {
 // Clear removes all System, Listener, Signals and Entity from the World
 func (world *World) Clear() {
 	world.systems.Clear()
-	world.listeners.Clear()
+	world.subscriptions.Clear()
 	world.signals.Clear()
 	world.toSend.Clear()
 	world.View.Clear()
@@ -248,10 +196,10 @@ func Default() *World {
 // Since those elements are sparse.Slice the will grow dynamically
 func New(entities, systems, listeners, signals int) *World {
 	return &World{
-		View:      NewView(entities),
-		systems:   sparse.NewSlice(systems),
-		listeners: sparse.NewSlice(listeners),
-		signals:   sparse.NewSlice(signals),
-		toSend:    sparse.NewSlice(signals),
+		View:          NewView(entities),
+		systems:       sparse.NewSlice(systems),
+		subscriptions: NewSubscriptions(listeners),
+		signals:       sparse.NewSlice(signals),
+		toSend:        sparse.NewSlice(signals),
 	}
 }

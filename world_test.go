@@ -30,11 +30,17 @@ import (
 	"testing"
 )
 
-type resetSignal struct{}
+type resetSignalEvent struct{}
+
+var resetSignalEventType = reflect.TypeOf(resetSignalEvent{})
+
+type dummySignal struct{}
+
+var dummySignalType = reflect.TypeOf(dummySignal{})
 
 func ResetHListener(world *goecs.World, e interface{}, _ float32) error {
 	switch e.(type) {
-	case resetSignal:
+	case resetSignalEvent:
 		for it := world.Iterator(PosType, VelType); it != nil; it = it.Next() {
 			v := it.Value()
 			pos := v.Get(PosType).(Pos)
@@ -61,7 +67,7 @@ func HMovementSystem(world *goecs.World, _ float32) error {
 
 func ResetVListener(world *goecs.World, e interface{}, _ float32) error {
 	switch e.(type) {
-	case resetSignal:
+	case resetSignalEvent:
 		for it := world.Iterator(PosType, VelType); it != nil; it = it.Next() {
 			v := it.Value()
 			pos := v.Get(PosType).(Pos)
@@ -216,8 +222,8 @@ func TestWorld_Signal(t *testing.T) {
 	world := goecs.Default()
 	world.AddSystem(HMovementSystem)
 	world.AddSystem(VMovementSystem)
-	world.AddListener(ResetHListener)
-	world.AddListener(ResetVListener)
+	world.AddListener(ResetHListener, resetSignalEventType)
+	world.AddListener(ResetVListener, resetSignalEventType)
 
 	world.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
 	world.AddEntity(Pos{X: 2, Y: 2})
@@ -231,7 +237,7 @@ func TestWorld_Signal(t *testing.T) {
 		{X: 7, Y: 7},
 	})
 
-	_ = world.Signal(resetSignal{})
+	_ = world.Signal(resetSignalEvent{})
 	_ = world.Update(0)
 
 	expectWorldPositions(t, world, []Pos{
@@ -256,6 +262,8 @@ func TestWorld_SignalMultiple(t *testing.T) {
 		num int
 	}
 
+	var numSignalType = reflect.TypeOf(nunSignal{})
+
 	sum := 0
 	world.AddListener(func(world *goecs.World, e interface{}, _ float32) error {
 		switch n := e.(type) {
@@ -263,7 +271,7 @@ func TestWorld_SignalMultiple(t *testing.T) {
 			sum += n.num
 		}
 		return nil
-	})
+	}, numSignalType)
 
 	_ = world.Signal(nunSignal{num: 1})
 	_ = world.Signal(nunSignal{num: 2})
@@ -282,7 +290,7 @@ func TestWorld_SignalMultiple(t *testing.T) {
 
 func TestWorld_Signal_Error(t *testing.T) {
 	world := goecs.Default()
-	world.AddListener(FailureListener)
+	world.AddListener(FailureListener, resetSignalEventType)
 	world.AddSystem(HMovementSystem)
 	world.AddSystem(VMovementSystem)
 
@@ -302,7 +310,7 @@ func TestWorld_Signal_Error(t *testing.T) {
 		{X: 7, Y: 7},
 	})
 
-	e = world.Signal(resetSignal{})
+	e = world.Signal(resetSignalEvent{})
 
 	if e != nil {
 		t.Fatalf("shoudl not get error but got %v", e)
@@ -353,8 +361,8 @@ func TestWorld_AddSystemWithPriority(t *testing.T) {
 			setup: func(world *goecs.World) {
 				world.AddSystem(systemA)
 				world.AddSystem(systemB)
-				world.AddListener(listenerA)
-				world.AddListener(listenerB)
+				world.AddListener(listenerA, dummySignalType)
+				world.AddListener(listenerB, dummySignalType)
 			},
 			expect: []string{
 				"update a",
@@ -367,9 +375,9 @@ func TestWorld_AddSystemWithPriority(t *testing.T) {
 			name: "with priority",
 			setup: func(world *goecs.World) {
 				world.AddSystem(systemA)
-				world.AddListener(listenerA)
+				world.AddListener(listenerA, dummySignalType)
 				world.AddSystemWithPriority(systemB, 100)
-				world.AddListenerWithPriority(listenerB, 100)
+				world.AddListenerWithPriority(listenerB, 100, dummySignalType)
 			},
 			expect: []string{
 				"update b",
@@ -382,9 +390,9 @@ func TestWorld_AddSystemWithPriority(t *testing.T) {
 			name: "with priority inverted",
 			setup: func(world *goecs.World) {
 				world.AddSystem(systemB)
-				world.AddListener(listenerB)
+				world.AddListener(listenerB, dummySignalType)
 				world.AddSystemWithPriority(systemA, -100)
-				world.AddListenerWithPriority(listenerA, -100)
+				world.AddListenerWithPriority(listenerA, -100, dummySignalType)
 			},
 			expect: []string{
 				"update b",
@@ -400,7 +408,7 @@ func TestWorld_AddSystemWithPriority(t *testing.T) {
 
 			tc.setup(world)
 
-			_ = world.Signal("hello")
+			_ = world.Signal(dummySignal{})
 			_ = world.Update(0)
 
 			if !reflect.DeepEqual(systemCalls, tc.expect) {

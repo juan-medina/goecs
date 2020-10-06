@@ -37,7 +37,7 @@ func Example() {
 	world.AddSystem(MovementSystem)
 
 	// add a listener
-	world.AddListener(ChangePostListener)
+	world.AddListener(ChangePostListener, PosChangeSignalType)
 
 	// add a first entity
 	world.AddEntity(
@@ -137,3 +137,6 @@ type PosChangeSignal struct {
 	From Pos
 	To   Pos
 }
+
+// PosChangeSignalType is the type of the PosChangeSignal
+var PosChangeSignalType = reflect.TypeOf(PosChangeSignal{})
