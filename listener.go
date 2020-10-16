@@ -30,14 +30,14 @@ import (
 )
 
 // Listener that get notified that a new signal has been received by World.Signal
-type Listener func(world *World, signal interface{}, delta float32) error
+type Listener func(world *World, signal Component, delta float32) error
 
 // subscription hold the information of listener subscribed to signals with a priority and id
 type subscription struct {
-	listener Listener       // listener for this subscription
-	signals  []reflect.Type // signals that we are subscribed to
-	priority int32          // priority of this subscription
-	id       int64          // id of the subscription
+	listener Listener        // listener for this subscription
+	signals  []ComponentType // signals that we are subscribed to
+	priority int32           // priority of this subscription
+	id       int64           // id of the subscription
 }
 
 // Subscriptions manage subscriptions of Listeners to signals
@@ -49,7 +49,7 @@ type Subscriptions struct {
 }
 
 // Subscribe adds a new subscription given a priority and set of signals types
-func (subs *Subscriptions) Subscribe(listener Listener, priority int32, signals ...reflect.Type) {
+func (subs *Subscriptions) Subscribe(listener Listener, priority int32, signals ...ComponentType) {
 	// increment the id
 	subs.lastSubscriptionID++
 	// add the subscription
@@ -94,7 +94,7 @@ func (subs *Subscriptions) Update(world *World, delta float32) error {
 	var err error
 	// get thee signals to send
 	for ite := subs.toSend.Iterator(); ite != nil; ite = ite.Next() {
-		if err = subs.process(world, ite.Value(), delta); err != nil {
+		if err = subs.process(world, ite.Value().(Component), delta); err != nil {
 			return err
 		}
 	}
@@ -106,10 +106,10 @@ func (subs *Subscriptions) Update(world *World, delta float32) error {
 }
 
 // process the subscriptions for this signal
-func (subs Subscriptions) process(world *World, signal interface{}, delta float32) error {
+func (subs Subscriptions) process(world *World, signal Component, delta float32) error {
 	var err error
 	// get the signal type
-	signalType := reflect.TypeOf(signal)
+	signalType := signal.Type()
 	// iterate trough the subscriptions
 	for it := subs.subscriptions.Iterator(); it != nil; it = it.Next() {
 		// get te subscription value
@@ -152,7 +152,7 @@ func (subs Subscriptions) String() string {
 			if signals != "" {
 				signals += ","
 			}
-			signals += v.Name()
+			signals += reflect.TypeOf(v).Name()
 		}
 		str += fmt.Sprintf("{listener: %s, signals: [%s]}", name, signals)
 	}

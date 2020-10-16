@@ -36,7 +36,7 @@ type listenerCall struct {
 
 var listenersCalls = make([]listenerCall, 0)
 
-func addCall(signal interface{}) {
+func addCall(signal Component) {
 	pc, _, _, _ := runtime.Caller(1)
 	fn := runtime.FuncForPC(pc).Name()
 	fn = strings.Replace(fn, "github.com/juan-medina/goecs.", "", -1)
@@ -48,17 +48,17 @@ func addCall(signal interface{}) {
 	})
 }
 
-func listenerA(_ *World, signal interface{}, _ float32) error {
+func listenerA(_ *World, signal Component, _ float32) error {
 	addCall(signal)
 	return nil
 }
 
-func listenerB(_ *World, signal interface{}, _ float32) error {
+func listenerB(_ *World, signal Component, _ float32) error {
 	addCall(signal)
 	return nil
 }
 
-func listenerC(_ *World, signal interface{}, _ float32) error {
+func listenerC(_ *World, signal Component, _ float32) error {
 	addCall(signal)
 	return nil
 }
@@ -264,17 +264,29 @@ func TestSubscriptions(t *testing.T) {
 
 }
 
+var signal1Type = NewComponentType()
+
 type signal1 struct{}
 
-var signal1Type = reflect.TypeOf(signal1{})
+func (s signal1) Type() ComponentType {
+	return signal1Type
+}
+
+var signal2Type = NewComponentType()
 
 type signal2 struct{}
 
-var signal2Type = reflect.TypeOf(signal2{})
+func (s signal2) Type() ComponentType {
+	return signal2Type
+}
+
+var signal3Type = NewComponentType()
 
 type signal3 struct{}
 
-var signal3Type = reflect.TypeOf(signal3{})
+func (s signal3) Type() ComponentType {
+	return signal3Type
+}
 
 func TestSubscriptions_String(t *testing.T) {
 	subs := NewSubscriptions(10, 10)

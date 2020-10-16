@@ -23,14 +23,13 @@ For a more in deep read on this topic I could recommend this [article](https://m
 
 ## Example
 
-[Run it on the Go Playground](https://play.golang.org/p/9urqRvY8u-v)
+[Run it on the Go Playground](https://play.golang.org/p/xOWTIafc2Rc)
 ```go
 package main
 
 import (
 	"fmt"
 	"github.com/juan-medina/goecs"
-	"reflect"
 )
 
 // Simple Usage
@@ -47,19 +46,24 @@ func main() {
 	// add a first entity
 	world.AddEntity(
 		Pos{X: 0, Y: 0},
-		Vel{X: 1, Y: 1},
+		Vel{X: 2, Y: 2},
 	)
 
 	// this entity shouldn't be updated
 	world.AddEntity(
-		Pos{X: 2, Y: 2},
+		Pos{X: 6, Y: 6},
 	)
 
 	// add a third entity
 	world.AddEntity(
-		Pos{X: 2, Y: 2},
-		Vel{X: 3, Y: 3},
+		Pos{X: 8, Y: 8},
+		Vel{X: 4, Y: 4},
 	)
+
+	// print the world
+	PrintWorld(world)
+	fmt.Println()
+	fmt.Println("updating world for halve a second:")
 
 	// ask the world to update
 	if err := world.Update(0.5); err != nil {
@@ -68,9 +72,22 @@ func main() {
 
 	// print the world
 	fmt.Println()
-	fmt.Println("Pos:")
-	for it := world.Iterator(PosType); it != nil; it = it.Next() {
-		fmt.Println(it.Value().Get(PosType))
+	PrintWorld(world)
+}
+
+// PrintWorld prints the content of our world
+func PrintWorld(world *goecs.World) {
+	fmt.Println("World:")
+	for it := world.Iterator(); it != nil; it = it.Next() {
+		ent := it.Value()
+		id := ent.ID()
+		pos := ent.Get(PosType).(Pos)
+		if ent.Contains(VelType) {
+			vel := ent.Get(VelType).(Vel)
+			fmt.Printf("Id: %d, Pos: %v, Vel: %v/s\n", id, pos, vel)
+		} else {
+			fmt.Printf("Id: %d, Pos: %v\n", id, pos)
+		}
 	}
 }
 
@@ -85,29 +102,32 @@ func MovementSystem(world *goecs.World, delta float32) error {
 
 		// calculate new pos
 		npos := Pos{
-			X: pos.X + (vel.X * delta),
+			X: pos.X + vel.X*delta,
 			Y: pos.Y + vel.Y*delta,
 		}
 
-		// signal the change
-		world.Signal(PosChangeSignal{From: pos, To: npos})
-
 		// set the new pos
 		ent.Set(npos)
+
+		// signal the change
+		world.Signal(PosChangeSignal{ID: ent.ID(), From: pos, To: npos})
 	}
 
 	return nil
 }
 
 // ChangePostListener listen to PosChangeSignal
-func ChangePostListener(world *goecs.World, signal interface{}, delta float32) error {
+func ChangePostListener(world *goecs.World, signal goecs.Component, delta float32) error {
 	switch s := signal.(type) {
 	case PosChangeSignal:
 		// print the change
-		fmt.Printf("pos change from %v to %v\n", s.From, s.To)
+		fmt.Printf("pos change for id: %d, from Pos%v to Pos%v\n", s.ID, s.From, s.To)
 	}
 	return nil
 }
+
+// PosType is the ComponentType of Pos
+var PosType = goecs.NewComponentType()
 
 // Pos represent a 2D position
 type Pos struct {
@@ -115,8 +135,13 @@ type Pos struct {
 	Y float32
 }
 
-// PosType is the reflect.Type of Pos
-var PosType = reflect.TypeOf(Pos{})
+// Type will return Pos goecs.ComponentType
+func (p Pos) Type() goecs.ComponentType {
+	return PosType
+}
+
+// VelType is the ComponentType of Vel
+var VelType = goecs.NewComponentType()
 
 // Vel represent a 2D velocity
 type Vel struct {
@@ -124,28 +149,42 @@ type Vel struct {
 	Y float32
 }
 
-// VelType is the reflect.Type of Vel
-var VelType = reflect.TypeOf(Vel{})
+// Type will return Vel goecs.ComponentType
+func (v Vel) Type() goecs.ComponentType {
+	return VelType
+}
+
+// PosChangeSignalType is the type of the PosChangeSignal
+var PosChangeSignalType = goecs.NewComponentType()
 
 // PosChangeSignal is a signal that a Pos has change
 type PosChangeSignal struct {
+	ID   uint64
 	From Pos
 	To   Pos
 }
 
-// PosChangeSignalType is the type of the PosChangeSignal
-var PosChangeSignalType = reflect.TypeOf(PosChangeSignal{})
+// Type will return PosChangeSignal goecs.ComponentType
+func (p PosChangeSignal) Type() goecs.ComponentType {
+	return PosChangeSignalType
+}
+
 ```
 This will output:
-
 ```
-pos change from {0 0} to {0.5 0.5}
-pos change from {2 2} to {3.5 3.5}
+World:
+Id: 0, Pos: {0 0}, Vel: {2 2}/s
+Id: 1, Pos: {6 6}
+Id: 2, Pos: {8 8}, Vel: {4 4}/s
 
-Pos:
-{0.5 0.5}
-{2 2}
-{3.5 3.5}
+updating world for halve a second:
+pos change for id: 0, from Pos{0 0} to Pos{1 1}
+pos change for id: 2, from Pos{8 8} to Pos{10 10}
+
+World:
+Id: 0, Pos: {1 1}, Vel: {2 2}/s
+Id: 1, Pos: {6 6}
+Id: 2, Pos: {10 10}, Vel: {4 4}/s
 ```
 
 ## Installation

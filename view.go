@@ -25,7 +25,6 @@ package goecs
 import (
 	"fmt"
 	"github.com/juan-medina/goecs/sparse"
-	"reflect"
 )
 
 // Iterator for view
@@ -39,6 +38,7 @@ type Iterator interface {
 // View represent a set of Entity objects
 type View struct {
 	entities sparse.Slice
+	lastID   uint64
 }
 
 // String get a string representation of a View
@@ -56,9 +56,10 @@ func (vw View) String() string {
 }
 
 // AddEntity a Entity instance to a View given it components
-func (vw *View) AddEntity(components ...interface{}) *Entity {
-	ent := NewEntity(components...)
+func (vw *View) AddEntity(components ...Component) *Entity {
+	ent := NewEntity(vw.lastID, components...)
 	vw.entities.Add(ent)
+	vw.lastID++
 	return ent
 }
 
@@ -75,7 +76,7 @@ func (vw View) Size() int {
 type viewIterator struct {
 	view   *View
 	eit    sparse.Iterator
-	filter []reflect.Type
+	filter []ComponentType
 }
 
 func (vi *viewIterator) Next() Iterator {
@@ -103,12 +104,12 @@ func (vi *viewIterator) Value() *Entity {
 	return vi.eit.Value().(*Entity)
 }
 
-// Iterator return an view.Iterator for the given varg reflect.Type
-func (vw *View) Iterator(rtypes ...reflect.Type) Iterator {
+// Iterator return an view.Iterator for the given varg ComponentType
+func (vw *View) Iterator(types ...ComponentType) Iterator {
 	it := viewIterator{
 		view:   vw,
 		eit:    nil,
-		filter: rtypes,
+		filter: types,
 	}
 	return it.first()
 }

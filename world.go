@@ -24,7 +24,6 @@ package goecs
 
 import (
 	"fmt"
-	"reflect"
 )
 
 const (
@@ -72,12 +71,12 @@ func (world *World) AddSystemWithPriority(sys System, priority int32) {
 }
 
 // AddListener adds the given Listener to the world
-func (world *World) AddListener(lis Listener, signals ...reflect.Type) {
+func (world *World) AddListener(lis Listener, signals ...ComponentType) {
 	world.AddListenerWithPriority(lis, defaultPriority, signals...)
 }
 
 // AddListenerWithPriority adds the given Listener to the world with a priority
-func (world *World) AddListenerWithPriority(lis Listener, priority int32, signals ...reflect.Type) {
+func (world *World) AddListenerWithPriority(lis Listener, priority int32, signals ...ComponentType) {
 	world.subscriptions.Subscribe(lis, priority, signals...)
 }
 

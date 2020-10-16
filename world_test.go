@@ -30,15 +30,23 @@ import (
 	"testing"
 )
 
+var resetSignalEventType = goecs.NewComponentType()
+
 type resetSignalEvent struct{}
 
-var resetSignalEventType = reflect.TypeOf(resetSignalEvent{})
+func (r resetSignalEvent) Type() goecs.ComponentType {
+	return resetSignalEventType
+}
+
+var dummySignalType = goecs.NewComponentType()
 
 type dummySignal struct{}
 
-var dummySignalType = reflect.TypeOf(dummySignal{})
+func (d dummySignal) Type() goecs.ComponentType {
+	return dummySignalType
+}
 
-func ResetHListener(world *goecs.World, e interface{}, _ float32) error {
+func ResetHListener(world *goecs.World, e goecs.Component, _ float32) error {
 	switch e.(type) {
 	case resetSignalEvent:
 		for it := world.Iterator(PosType, VelType); it != nil; it = it.Next() {
@@ -65,7 +73,7 @@ func HMovementSystem(world *goecs.World, _ float32) error {
 	return nil
 }
 
-func ResetVListener(world *goecs.World, e interface{}, _ float32) error {
+func ResetVListener(world *goecs.World, e goecs.Component, _ float32) error {
 	switch e.(type) {
 	case resetSignalEvent:
 		for it := world.Iterator(PosType, VelType); it != nil; it = it.Next() {
@@ -97,7 +105,7 @@ func FailureSystem(_ *goecs.World, _ float32) error {
 	return errFailure
 }
 
-func FailureListener(_ *goecs.World, _ interface{}, _ float32) error {
+func FailureListener(_ *goecs.World, _ goecs.Component, _ float32) error {
 	return errFailure
 }
 
@@ -255,17 +263,21 @@ func TestWorld_Signal(t *testing.T) {
 	})
 }
 
+var numSignalType = goecs.NewComponentType()
+
+type nunSignal struct {
+	num int
+}
+
+func (s nunSignal) Type() goecs.ComponentType {
+	return numSignalType
+}
+
 func TestWorld_SignalMultiple(t *testing.T) {
 	world := goecs.Default()
 
-	type nunSignal struct {
-		num int
-	}
-
-	var numSignalType = reflect.TypeOf(nunSignal{})
-
 	sum := 0
-	world.AddListener(func(world *goecs.World, e interface{}, _ float32) error {
+	world.AddListener(func(world *goecs.World, e goecs.Component, _ float32) error {
 		switch n := e.(type) {
 		case nunSignal:
 			sum += n.num
@@ -331,7 +343,7 @@ func systemA(_ *goecs.World, _ float32) error {
 	systemCalls = append(systemCalls, "update a")
 	return nil
 }
-func listenerA(_ *goecs.World, _ interface{}, _ float32) error {
+func listenerA(_ *goecs.World, _ goecs.Component, _ float32) error {
 	systemCalls = append(systemCalls, "notify a")
 	return nil
 }
@@ -340,7 +352,7 @@ func systemB(_ *goecs.World, _ float32) error {
 	systemCalls = append(systemCalls, "update b")
 	return nil
 }
-func listenerB(_ *goecs.World, _ interface{}, _ float32) error {
+func listenerB(_ *goecs.World, _ goecs.Component, _ float32) error {
 	systemCalls = append(systemCalls, "notify b")
 	return nil
 }

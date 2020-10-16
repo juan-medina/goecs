@@ -28,11 +28,16 @@ import (
 	"testing"
 )
 
+var GameObjectType = goecs.NewComponentType()
+
+//goland:noinspection GoUnusedExportedType
 type GameObject struct {
 	name string
 }
 
-var GameObjectType = reflect.TypeOf(GameObject{})
+func (g GameObject) Type() goecs.ComponentType {
+	return GameObjectType
+}
 
 func expectViewPositions(t *testing.T, view *goecs.View, want []Pos) {
 	t.Helper()
@@ -119,28 +124,28 @@ func TestView_Iterator(t *testing.T) {
 
 	type testCase struct {
 		name   string
-		params []reflect.Type
+		params []goecs.ComponentType
 		expect []*goecs.Entity
 	}
 	var cases = []testCase{
 		{
 			name:   "should get ent1 asking for pos and vel",
-			params: []reflect.Type{PosType, VelType},
+			params: []goecs.ComponentType{PosType, VelType},
 			expect: []*goecs.Entity{ent1},
 		},
 		{
 			name:   "should get ent1 and ent2 asking only for pos",
-			params: []reflect.Type{PosType},
+			params: []goecs.ComponentType{PosType},
 			expect: []*goecs.Entity{ent1, ent2},
 		},
 		{
 			name:   "should get no entities with non existing component",
-			params: []reflect.Type{GameObjectType},
+			params: []goecs.ComponentType{GameObjectType},
 			expect: []*goecs.Entity{},
 		},
 		{
 			name:   "should get ent1 asking for only vel",
-			params: []reflect.Type{VelType},
+			params: []goecs.ComponentType{VelType},
 			expect: []*goecs.Entity{ent1},
 		},
 	}

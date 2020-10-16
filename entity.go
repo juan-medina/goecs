@@ -27,18 +27,14 @@ import (
 	"reflect"
 )
 
-var (
-	lastID = int64(0)
-)
-
 // Entity represents a instance of an object in a ECS
 type Entity struct {
-	id         int64
-	components map[reflect.Type]interface{}
+	id         uint64
+	components map[ComponentType]Component
 }
 
 // ID : get the unique id for this Entity
-func (ent Entity) ID() int64 {
+func (ent Entity) ID() uint64 {
 	return ent.id
 }
 
@@ -50,53 +46,51 @@ func (ent Entity) String() string {
 		if result != "" {
 			result += ","
 		}
-		result += fmt.Sprintf("%s%v", reflect.TypeOf(v).String(), v)
+		result += fmt.Sprintf("%s%v", reflect.TypeOf(v), v)
 	}
 
 	return "Entity{" + result + "}"
 }
 
 // NewEntity creates a new Entity giving a set of varg components
-func NewEntity(components ...interface{}) *Entity {
+func NewEntity(ID uint64, components ...Component) *Entity {
 	ent := Entity{
-		id:         lastID,
-		components: make(map[reflect.Type]interface{}),
+		id:         ID,
+		components: make(map[ComponentType]Component),
 	}
 
 	for _, v := range components {
 		ent.Add(v)
 	}
-
-	lastID++
 	return &ent
 }
 
 // Add a new component into an Entity
-func (ent *Entity) Add(component interface{}) *Entity {
-	ent.components[reflect.TypeOf(component)] = component
+func (ent *Entity) Add(component Component) *Entity {
+	ent.components[component.Type()] = component
 	return ent
 }
 
 // Set a new component into an Entity
-func (ent *Entity) Set(component interface{}) *Entity {
+func (ent *Entity) Set(component Component) *Entity {
 	return ent.Add(component)
 }
 
-// Get the component of the given reflect.Type
-func (ent Entity) Get(rtype reflect.Type) interface{} {
-	return ent.components[rtype]
+// Get the component of the given ComponentType
+func (ent Entity) Get(ctype ComponentType) Component {
+	return ent.components[ctype]
 }
 
-// Remove the component of the given reflect.Type
-func (ent *Entity) Remove(typ reflect.Type) {
-	delete(ent.components, typ)
+// Remove the component of the given ComponentType
+func (ent *Entity) Remove(ctype ComponentType) {
+	delete(ent.components, ctype)
 }
 
-// Contains check that the Entity has the given varg reflect.Type
-func (ent Entity) Contains(rtypes ...reflect.Type) bool {
+// Contains check that the Entity has the given varg ComponentType
+func (ent Entity) Contains(types ...ComponentType) bool {
 	var contains = true
 
-	for _, t := range rtypes {
+	for _, t := range types {
 		if _, ok := ent.components[t]; !ok {
 			contains = false
 			break
@@ -106,11 +100,11 @@ func (ent Entity) Contains(rtypes ...reflect.Type) bool {
 	return contains
 }
 
-// NotContains check that the Entity has not the given varg reflect.Type
-func (ent Entity) NotContains(rtypes ...reflect.Type) bool {
+// NotContains check that the Entity has not the given varg ComponentType
+func (ent Entity) NotContains(types ...ComponentType) bool {
 	var noContains = true
 
-	for _, t := range rtypes {
+	for _, t := range types {
 		if _, ok := ent.components[t]; ok {
 			noContains = false
 			break

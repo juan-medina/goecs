@@ -29,7 +29,7 @@ import (
 )
 
 func TestNewEntity(t *testing.T) {
-	ent1 := goecs.NewEntity().Add(Pos{
+	ent1 := goecs.NewEntity(1).Add(Pos{
 		X: 1,
 		Y: 1,
 	}).Add(Vel{
@@ -60,7 +60,7 @@ func TestNewEntity(t *testing.T) {
 }
 
 func TestNew_With_Components(t *testing.T) {
-	ent1 := goecs.NewEntity(Pos{
+	ent1 := goecs.NewEntity(1, Pos{
 		X: 1,
 		Y: 1,
 	}, Vel{
@@ -91,7 +91,7 @@ func TestNew_With_Components(t *testing.T) {
 }
 
 func TestEntity_Get(t *testing.T) {
-	ent1 := goecs.NewEntity().Add(Pos{
+	ent1 := goecs.NewEntity(1).Add(Pos{
 		X: 1,
 		Y: 1,
 	})
@@ -126,7 +126,7 @@ func TestEntity_Get(t *testing.T) {
 }
 
 func TestEntity_Contains(t *testing.T) {
-	ent1 := goecs.NewEntity().Add(Pos{
+	ent1 := goecs.NewEntity(1).Add(Pos{
 		X: 1,
 		Y: 1,
 	}).Add(Vel{
@@ -134,7 +134,7 @@ func TestEntity_Contains(t *testing.T) {
 		Y: 2,
 	})
 
-	ent2 := goecs.NewEntity().Add(Pos{
+	ent2 := goecs.NewEntity(1).Add(Pos{
 		X: 1,
 		Y: 1,
 	})
@@ -165,7 +165,7 @@ func TestEntity_Contains(t *testing.T) {
 }
 
 func TestEntity_NoContains(t *testing.T) {
-	ent1 := goecs.NewEntity().Add(Pos{
+	ent1 := goecs.NewEntity(1).Add(Pos{
 		X: 1,
 		Y: 1,
 	}).Add(Vel{
@@ -173,7 +173,7 @@ func TestEntity_NoContains(t *testing.T) {
 		Y: 2,
 	})
 
-	ent2 := goecs.NewEntity().Add(Pos{
+	ent2 := goecs.NewEntity(1).Add(Pos{
 		X: 1,
 		Y: 1,
 	})
@@ -231,7 +231,7 @@ func TestEntity_NoContains(t *testing.T) {
 }
 
 func TestEntity_Set(t *testing.T) {
-	ent1 := goecs.NewEntity().Add(Pos{
+	ent1 := goecs.NewEntity(1).Add(Pos{
 		X: 1,
 		Y: 1,
 	}).Add(Vel{
@@ -254,7 +254,7 @@ func TestEntity_Set(t *testing.T) {
 }
 
 func TestEntity_String(t *testing.T) {
-	ent := goecs.NewEntity().Add(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
+	ent := goecs.NewEntity(1).Add(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
 
 	s := ent.String()
 
@@ -264,8 +264,8 @@ func TestEntity_String(t *testing.T) {
 }
 
 func TestEntity_Id(t *testing.T) {
-	ent1 := goecs.NewEntity().Add(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
-	ent2 := goecs.NewEntity().Add(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
+	ent1 := goecs.NewEntity(1).Add(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
+	ent2 := goecs.NewEntity(1).Add(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
 
 	if !(ent1.ID() <= ent2.ID()) {
 		t.Fatalf("expect ent1 to have bigger id than ent 2, ent1 %v ent2 %v", ent1, ent2)
@@ -273,7 +273,7 @@ func TestEntity_Id(t *testing.T) {
 }
 
 func TestEntity_Remove(t *testing.T) {
-	ent := goecs.NewEntity().Add(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
+	ent := goecs.NewEntity(1).Add(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
 
 	var got bool
 	var want bool
