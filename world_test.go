@@ -491,8 +491,8 @@ func Test_SystemsInStruct(t *testing.T) {
 func TestWorld_Sort(t *testing.T) {
 	world := goecs.Default()
 
-	world.AddEntity(Pos{X: 3, Y: -3}).Add(Vel{X: 4, Y: 4})
-	world.AddEntity(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
+	world.AddEntity(Pos{X: 3, Y: -3}, Vel{X: 4, Y: 4})
+	world.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
 	world.AddEntity(Pos{X: 2, Y: -2})
 
 	world.Sort(sortByPosX)

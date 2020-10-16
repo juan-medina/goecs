@@ -23,28 +23,165 @@
 package goecs
 
 import (
+	"errors"
 	"fmt"
-	"github.com/juan-medina/goecs/sparse"
+	"sort"
 )
 
-// Iterator for view
-type Iterator interface {
-	// Next returns next element
-	Next() Iterator
-	// Value returns the current item value
-	Value() *Entity
-}
+var (
+	// ErrEntityNotFound is the error when we could not find an viewItem
+	ErrEntityNotFound = errors.New("entity not found")
+)
 
 // View represent a set of Entity objects
 type View struct {
-	entities sparse.Slice
-	lastID   uint64
+	capacity int
+	grow     int
+	items    []*Entity
+	size     int
+	lastID   EntityID
+}
+
+// Iterator allow to iterate trough the View
+type Iterator struct {
+	data    *View
+	current int
+	filter  []ComponentType
+}
+
+// Next return a Iterator to the next Entity
+func (ei *Iterator) Next() *Iterator {
+	for i := ei.current + 1; i < len(ei.data.items); i++ {
+		item := ei.data.items[i]
+		if item != nil {
+			if item.Contains(ei.filter...) {
+				ei.current = i
+				return ei
+			}
+		}
+	}
+	return nil
+}
+
+// first return a Iterator to the first Entity
+func (ei *Iterator) first() *Iterator {
+	for i := ei.current + 1; i < len(ei.data.items); i++ {
+		item := ei.data.items[i]
+		if item != nil {
+			if item.Contains(ei.filter...) {
+				ei.current = i
+				return ei
+			}
+		}
+	}
+	return nil
+}
+
+// Value returns the value of the current Iterator
+func (ei *Iterator) Value() *Entity {
+	return ei.data.items[ei.current]
+}
+
+// AddEntity a Entity instance to a View given it components
+func (v *View) AddEntity(data ...Component) EntityID {
+	v.lastID++
+	ent := NewEntity(v.lastID, data...)
+	for i, si := range v.items {
+		if si == nil {
+			v.items[i] = ent
+			v.size++
+			return ent.ID()
+		}
+	}
+
+	v.growCapacity()
+	v.items[v.size] = ent
+	v.size++
+	return ent.ID()
+}
+
+// Remove a Entity from a View
+func (v *View) Remove(id EntityID) error {
+	if i, err := v.find(id); err == nil {
+		v.items[i] = nil
+		v.size--
+	} else {
+		return err
+	}
+	return nil
+}
+
+// Get a Entity from a View giving it EntityID
+func (v *View) Get(id EntityID) (*Entity, error) {
+	var err error = nil
+	var i int
+	if i, err = v.find(id); err == nil {
+		return v.items[i], nil
+	}
+	return nil, err
+}
+
+// Clear removes all Entity from the View
+func (v *View) Clear() {
+	for i := 0; i < v.capacity; i++ {
+		v.items[i] = nil
+	}
+	v.size = 0
+}
+
+// Size is the number of Entity in this View
+func (v View) Size() int {
+	return v.size
+}
+
+// Iterator return an view.Iterator for the given varg ComponentType
+func (v *View) Iterator(types ...ComponentType) *Iterator {
+	it := Iterator{
+		data:    v,
+		current: -1,
+		filter:  types,
+	}
+	return it.first()
+}
+
+// growCapacity increases the View capacity
+func (v *View) growCapacity() {
+	v.capacity += v.grow
+	v.items = append(v.items, make([]*Entity, v.grow)...)
+	v.grow = (v.capacity >> 2) + 1 // next grow will be 25% + 1
+}
+
+// find a Entity position in a View giving it EntityID
+func (v View) find(id EntityID) (int, error) {
+	for i, si := range v.items {
+		if si != nil {
+			if si.ID() == id {
+				return i, nil
+			}
+		}
+	}
+	return 0, ErrEntityNotFound
+}
+
+// Sort the entities in place with a less function
+func (v *View) Sort(less func(a, b *Entity) bool) {
+	sort.Slice(v.items, func(i, j int) bool {
+		a := v.items[i]
+		b := v.items[j]
+		if a == nil {
+			return false
+		} else if b == nil {
+			return true
+		} else {
+			return less(a, b)
+		}
+	})
 }
 
 // String get a string representation of a View
-func (vw View) String() string {
+func (v View) String() string {
 	str := ""
-	for it := vw.Iterator(); it != nil; it = it.Next() {
+	for it := v.Iterator(); it != nil; it = it.Next() {
 		if str != "" {
 			str += ","
 		}
@@ -55,80 +192,13 @@ func (vw View) String() string {
 	return fmt.Sprintf("View{entities: [%v]}", str)
 }
 
-// AddEntity a Entity instance to a View given it components
-func (vw *View) AddEntity(components ...Component) *Entity {
-	ent := NewEntity(vw.lastID, components...)
-	vw.entities.Add(ent)
-	vw.lastID++
-	return ent
-}
-
-// Remove a Entity from a View
-func (vw *View) Remove(ent *Entity) error {
-	return vw.entities.Remove(ent)
-}
-
-// Size of Entity in the View
-func (vw View) Size() int {
-	return vw.entities.Size()
-}
-
-type viewIterator struct {
-	view   *View
-	eit    sparse.Iterator
-	filter []ComponentType
-}
-
-func (vi *viewIterator) Next() Iterator {
-	for vi.eit = vi.eit.Next(); vi.eit != nil; vi.eit = vi.eit.Next() {
-		val := vi.Value()
-		if val.Contains(vi.filter...) {
-			return vi
-		}
-	}
-	return nil
-}
-
-func (vi *viewIterator) first() Iterator {
-	for it := vi.view.entities.Iterator(); it != nil; it = it.Next() {
-		val := it.Value().(*Entity)
-		if val.Contains(vi.filter...) {
-			vi.eit = it
-			return vi
-		}
-	}
-	return nil
-}
-
-func (vi *viewIterator) Value() *Entity {
-	return vi.eit.Value().(*Entity)
-}
-
-// Iterator return an view.Iterator for the given varg ComponentType
-func (vw *View) Iterator(types ...ComponentType) Iterator {
-	it := viewIterator{
-		view:   vw,
-		eit:    nil,
-		filter: types,
-	}
-	return it.first()
-}
-
-// Clear removes all Entity from the view.View
-func (vw *View) Clear() {
-	vw.entities.Clear()
-}
-
-// Sort the entities in place with a less function
-func (vw *View) Sort(less func(a, b *Entity) bool) {
-	vw.entities.Sort(func(a interface{}, b interface{}) bool {
-		return less(a.(*Entity), b.(*Entity))
-	})
-}
-
 // NewView creates a new empty View with a given capacity
 func NewView(capacity int) *View {
-	return &View{
-		entities: sparse.NewSlice(capacity),
+	slice := View{
+		items:    make([]*Entity, capacity),
+		capacity: capacity,
+		grow:     capacity, // first grow will double capacity
+		size:     0,
 	}
+	return &slice
 }

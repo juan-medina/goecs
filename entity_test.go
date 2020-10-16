@@ -308,3 +308,59 @@ func TestEntity_Remove(t *testing.T) {
 		ent.Remove(VelType)
 	})
 }
+
+func TestEntity_Clear(t *testing.T) {
+	ent1 := goecs.NewEntity(1).Add(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
+	ent1.Clear()
+
+	got := ent1.Contains(PosType)
+
+	if got != false {
+		t.Fatalf("got %v, want false", got)
+	}
+
+	got = ent1.Contains(VelType)
+
+	if got != false {
+		t.Fatalf("got %v, want false", got)
+	}
+}
+
+func TestEntity_IsEmpty(t *testing.T) {
+	ent1 := goecs.NewEntity(1).Add(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
+
+	got := ent1.IsEmpty()
+	if got != false {
+		t.Fatalf("got %v, want false", got)
+	}
+
+	ent1.Clear()
+	got = ent1.IsEmpty()
+	if got != true {
+		t.Fatalf("got %v, want true", got)
+	}
+}
+
+func TestEntity_Reuse(t *testing.T) {
+	ent1 := goecs.NewEntity(1).Add(Pos{X: 0, Y: 0}).Add(Vel{X: 1, Y: 1})
+
+	ent1.Reuse(2, Pos{X: 2, Y: 2})
+
+	godID := ent1.ID()
+	wantID := goecs.EntityID(2)
+
+	if godID != wantID {
+		t.Fatalf("got %v, want %v", godID, wantID)
+	}
+
+	gotPos := ent1.Get(PosType).(Pos)
+	expectPos := Pos{X: 2, Y: 2}
+
+	if gotPos != expectPos {
+		t.Fatalf("got %v, want %v", gotPos, expectPos)
+	}
+
+	if ent1.Contains(VelType) != false {
+		t.Fatalf("error on Reuse, expect to not contains vel but contains it")
+	}
+}

@@ -27,14 +27,17 @@ import (
 	"reflect"
 )
 
+// EntityID is the ID for an Entity
+type EntityID uint64
+
 // Entity represents a instance of an object in a ECS
 type Entity struct {
-	id         uint64
+	id         EntityID
 	components map[ComponentType]Component
 }
 
 // ID : get the unique id for this Entity
-func (ent Entity) ID() uint64 {
+func (ent Entity) ID() EntityID {
 	return ent.id
 }
 
@@ -53,7 +56,7 @@ func (ent Entity) String() string {
 }
 
 // NewEntity creates a new Entity giving a set of varg components
-func NewEntity(ID uint64, components ...Component) *Entity {
+func NewEntity(ID EntityID, components ...Component) *Entity {
 	ent := Entity{
 		id:         ID,
 		components: make(map[ComponentType]Component),
@@ -112,4 +115,24 @@ func (ent Entity) NotContains(types ...ComponentType) bool {
 	}
 
 	return noContains
+}
+
+// Clear the Entity
+func (ent *Entity) Clear() {
+	ent.components = make(map[ComponentType]Component)
+	ent.id = 0
+}
+
+// IsEmpty check if the Entity has not Component
+func (ent Entity) IsEmpty() bool {
+	return len(ent.components) == 0
+}
+
+// Reuse this Entity with new data
+func (ent *Entity) Reuse(id EntityID, components ...Component) {
+	ent.Clear()
+	ent.id = id
+	for _, v := range components {
+		ent.Add(v)
+	}
 }

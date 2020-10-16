@@ -173,18 +173,18 @@ func (p PosChangeSignal) Type() goecs.ComponentType {
 This will output:
 ```
 World:
-Id: 0, Pos: {0 0}, Vel: {2 2}/s
-Id: 1, Pos: {6 6}
-Id: 2, Pos: {8 8}, Vel: {4 4}/s
+Id: 1, Pos: {0 0}, Vel: {2 2}/s
+Id: 2, Pos: {6 6}
+Id: 3, Pos: {8 8}, Vel: {4 4}/s
 
 updating world for halve a second:
-pos change for id: 0, from Pos{0 0} to Pos{1 1}
-pos change for id: 2, from Pos{8 8} to Pos{10 10}
+pos change for id: 1, from Pos{0 0} to Pos{1 1}
+pos change for id: 3, from Pos{8 8} to Pos{10 10}
 
 World:
-Id: 0, Pos: {1 1}, Vel: {2 2}/s
-Id: 1, Pos: {6 6}
-Id: 2, Pos: {10 10}, Vel: {4 4}/s
+Id: 1, Pos: {1 1}, Vel: {2 2}/s
+Id: 2, Pos: {6 6}
+Id: 3, Pos: {10 10}, Vel: {4 4}/s
 ```
 
 ## Installation
