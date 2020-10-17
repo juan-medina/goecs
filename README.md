@@ -23,7 +23,7 @@ For a more in deep read on this topic I could recommend this [article](https://m
 
 ## Example
 
-[Run it on the Go Playground](https://play.golang.org/p/xOWTIafc2Rc)
+[Run it on the Go Playground](https://play.golang.org/p/l3wgiqeeBf6)
 ```go
 package main
 
