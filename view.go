@@ -54,9 +54,11 @@ func (ei *Iterator) Next() *Iterator {
 	for i := ei.current + 1; i < len(ei.data.items); i++ {
 		item := ei.data.items[i]
 		if item != nil {
-			if item.Contains(ei.filter...) {
-				ei.current = i
-				return ei
+			if !item.IsEmpty() {
+				if item.Contains(ei.filter...) {
+					ei.current = i
+					return ei
+				}
 			}
 		}
 	}
@@ -68,9 +70,11 @@ func (ei *Iterator) first() *Iterator {
 	for i := ei.current + 1; i < len(ei.data.items); i++ {
 		item := ei.data.items[i]
 		if item != nil {
-			if item.Contains(ei.filter...) {
-				ei.current = i
-				return ei
+			if !item.IsEmpty() {
+				if item.Contains(ei.filter...) {
+					ei.current = i
+					return ei
+				}
 			}
 		}
 	}
@@ -85,25 +89,30 @@ func (ei *Iterator) Value() *Entity {
 // AddEntity a Entity instance to a View given it components
 func (v *View) AddEntity(data ...Component) EntityID {
 	v.lastID++
-	ent := NewEntity(v.lastID, data...)
 	for i, si := range v.items {
-		if si == nil {
-			v.items[i] = ent
+		if si != nil {
+			if si.IsEmpty() {
+				si.Reuse(v.lastID, data...)
+				v.size++
+				return v.lastID
+			}
+		} else {
+			v.items[i] = NewEntity(v.lastID, data...)
 			v.size++
-			return ent.ID()
+			return v.lastID
 		}
 	}
 
 	v.growCapacity()
-	v.items[v.size] = ent
+	v.items[v.size] = NewEntity(v.lastID, data...)
 	v.size++
-	return ent.ID()
+	return v.lastID
 }
 
 // Remove a Entity from a View
 func (v *View) Remove(id EntityID) error {
 	if i, err := v.find(id); err == nil {
-		v.items[i] = nil
+		v.items[i].Clear()
 		v.size--
 	} else {
 		return err
@@ -124,7 +133,9 @@ func (v *View) Get(id EntityID) (*Entity, error) {
 // Clear removes all Entity from the View
 func (v *View) Clear() {
 	for i := 0; i < v.capacity; i++ {
-		v.items[i] = nil
+		if v.items[i] != nil {
+			v.items[i].Clear()
+		}
 	}
 	v.size = 0
 }
@@ -155,8 +166,10 @@ func (v *View) growCapacity() {
 func (v View) find(id EntityID) (int, error) {
 	for i, si := range v.items {
 		if si != nil {
-			if si.ID() == id {
-				return i, nil
+			if !si.IsEmpty() {
+				if si.ID() == id {
+					return i, nil
+				}
 			}
 		}
 	}
@@ -170,7 +183,11 @@ func (v *View) Sort(less func(a, b *Entity) bool) {
 		b := v.items[j]
 		if a == nil {
 			return false
+		} else if a.IsEmpty() {
+			return false
 		} else if b == nil {
+			return true
+		} else if b.IsEmpty() {
 			return true
 		} else {
 			return less(a, b)

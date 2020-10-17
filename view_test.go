@@ -334,3 +334,48 @@ func TestView_Get(t *testing.T) {
 		t.Fatalf("error on get got %v, expect nil", ent)
 	}
 }
+
+func TestView_Reuse(t *testing.T) {
+	view := goecs.NewView(2)
+	view.AddEntity(Pos{X: 3, Y: -3}, Vel{X: 4, Y: 4})
+	id1 := view.AddEntity(Pos{X: 4, Y: -4}, Vel{X: 4, Y: 4})
+	_ = view.Remove(id1)
+	view.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
+	id2 := view.AddEntity(Pos{X: 6, Y: -6}, Vel{X: 4, Y: 4})
+	_ = view.Remove(id2)
+	view.AddEntity(Pos{X: 2, Y: -2})
+
+	expectViewPositions(t, view, []Pos{
+		{X: 3, Y: -3},
+		{X: 0, Y: 0},
+		{X: 2, Y: -2},
+	})
+}
+
+func TestView_SortWithEmpty(t *testing.T) {
+	view := goecs.NewView(2)
+	view.AddEntity(Pos{X: 3, Y: -3}, Vel{X: 4, Y: 4})
+	id1 := view.AddEntity(Pos{X: 4, Y: -4}, Vel{X: 4, Y: 4})
+	view.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
+	id2 := view.AddEntity(Pos{X: 6, Y: -6}, Vel{X: 4, Y: 4})
+	view.AddEntity(Pos{X: 2, Y: -2})
+
+	_ = view.Remove(id1)
+	_ = view.Remove(id2)
+
+	view.Sort(sortByPosX)
+
+	expectViewPositions(t, view, []Pos{
+		{X: 0, Y: 0},
+		{X: 2, Y: -2},
+		{X: 3, Y: -3},
+	})
+
+	view.Sort(sortByPosY)
+
+	expectViewPositions(t, view, []Pos{
+		{X: 3, Y: -3},
+		{X: 2, Y: -2},
+		{X: 0, Y: 0},
+	})
+}
