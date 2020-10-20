@@ -206,6 +206,14 @@ func (v *View) Sort(less func(a, b *Entity) bool) {
 			return less(a, b)
 		}
 	})
+	// update index in lookup
+	for i, si := range v.items {
+		if si != nil {
+			if !si.IsEmpty() {
+				v.lookup[si.ID()] = i
+			}
+		}
+	}
 }
 
 // String get a string representation of a View

@@ -365,3 +365,31 @@ func TestView_SortWithEmpty(t *testing.T) {
 		{X: 0, Y: 0},
 	})
 }
+
+func TestView_GetWithSort(t *testing.T) {
+	view := goecs.NewView(2)
+
+	view.AddEntity(Pos{X: 2, Y: -2})
+	id1 := view.AddEntity(Pos{X: 3, Y: -3}, Vel{X: 4, Y: 4})
+	id2 := view.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
+
+	view.Sort(sortByPosX)
+
+	expectViewPositions(t, view, []Pos{
+		{X: 0, Y: 0},
+		{X: 2, Y: -2},
+		{X: 3, Y: -3},
+	})
+
+	got := view.Get(id1)
+
+	if got.ID() != id1 {
+		t.Fatalf("error on get after sort got id %v, expect id %v", got.ID(), id1)
+	}
+
+	got = view.Get(id2)
+
+	if got.ID() != id2 {
+		t.Fatalf("error on get after sort got id %v, expect id %v", got.ID(), id2)
+	}
+}
