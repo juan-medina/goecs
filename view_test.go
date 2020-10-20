@@ -302,11 +302,7 @@ func TestView_Get(t *testing.T) {
 	view := goecs.NewView(2)
 	id := view.AddEntity(Pos{X: 3, Y: -3}, Vel{X: 4, Y: 4})
 
-	ent, err := view.Get(id)
-
-	if err != nil {
-		t.Fatalf("error on get got %v, expect nil", err)
-	}
+	ent := view.Get(id)
 
 	if ent.ID() != id {
 		t.Fatalf("error on get got id %d, expect id %d", ent.ID(), id)
@@ -322,16 +318,6 @@ func TestView_Get(t *testing.T) {
 	wantVel := Vel{X: 4, Y: 4}
 	if !reflect.DeepEqual(gotVel, wantVel) {
 		t.Fatalf("error on view get got vel %v, want %v", gotVel, wantVel)
-	}
-
-	ent, err = view.Get(0)
-
-	if !errors.Is(err, goecs.ErrEntityNotFound) {
-		t.Fatalf("error on get got %v, expect %v", err, goecs.ErrEntityNotFound)
-	}
-
-	if ent != nil {
-		t.Fatalf("error on get got %v, expect nil", ent)
 	}
 }
 

@@ -40,6 +40,7 @@ type View struct {
 	items    []*Entity
 	size     int
 	lastID   EntityID
+	lookup   map[EntityID]int
 }
 
 // Iterator allow to iterate trough the View
@@ -94,17 +95,20 @@ func (v *View) AddEntity(data ...Component) EntityID {
 			if si.IsEmpty() {
 				si.Reuse(v.lastID, data...)
 				v.size++
+				v.lookup[v.lastID] = i
 				return v.lastID
 			}
 		} else {
 			v.items[i] = NewEntity(v.lastID, data...)
 			v.size++
+			v.lookup[v.lastID] = i
 			return v.lastID
 		}
 	}
 
 	v.growCapacity()
 	v.items[v.size] = NewEntity(v.lastID, data...)
+	v.lookup[v.lastID] = v.size
 	v.size++
 	return v.lastID
 }
@@ -121,13 +125,8 @@ func (v *View) Remove(id EntityID) error {
 }
 
 // Get a Entity from a View giving it EntityID
-func (v *View) Get(id EntityID) (*Entity, error) {
-	var err error = nil
-	var i int
-	if i, err = v.find(id); err == nil {
-		return v.items[i], nil
-	}
-	return nil, err
+func (v *View) Get(id EntityID) *Entity {
+	return v.items[v.lookup[id]]
 }
 
 // Clear removes all Entity from the View
@@ -216,6 +215,7 @@ func NewView(capacity int) *View {
 		capacity: capacity,
 		grow:     capacity, // first grow will double capacity
 		size:     0,
+		lookup:   make(map[EntityID]int),
 	}
 	return &slice
 }
