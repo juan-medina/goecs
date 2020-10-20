@@ -511,3 +511,42 @@ func TestWorld_Sort(t *testing.T) {
 		{X: 0, Y: 0},
 	})
 }
+
+func Test_Resources(t *testing.T) {
+	world := goecs.Default()
+
+	world.AddEntity(Pos{X: 3, Y: -3}, Vel{X: 4, Y: 4})
+	world.AddEntity(Pos{X: 0, Y: 0}, Vel{X: 1, Y: 1})
+	world.AddEntity(Pos{X: 2, Y: -2})
+
+	idScore := world.AddResource(score{points: 100})
+
+	id := world.FindResource(scoreType)
+
+	if id != idScore {
+		t.Fatalf("error on get resource got id %v, want id %v", id, idScore)
+	}
+
+	want := score{points: 100}
+	got := world.GetResource(idScore).Get(scoreType).(score)
+
+	if got != want {
+		t.Fatalf("error on get resource got %v, want %v", got, want)
+	}
+
+	id = world.FindResource(PosType)
+
+	if id != 0 {
+		t.Fatalf("error on get resource got id %v, want id %v", id, 0)
+	}
+}
+
+type score struct {
+	points int
+}
+
+func (s score) Type() goecs.ComponentType {
+	return scoreType
+}
+
+var scoreType = goecs.NewComponentType()

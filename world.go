@@ -36,6 +36,7 @@ const (
 	DefaultSystemsInitialCapacity   = 50   // Default System initial capacity
 	DefaultListenersInitialCapacity = 50   // Default Listener initial capacity
 	DefaultEntitiesInitialCapacity  = 2000 // Default Entity initial capacity
+	DefaultResourcesInitialCapacity = 20   // Default Resources initial capacity
 )
 
 // World is a view.View that contains the Entity and System of our ECS
@@ -43,6 +44,7 @@ type World struct {
 	*View
 	systems       *Systems       // systems registration of System
 	subscriptions *Subscriptions // subscriptions of Listener to signals
+	resources     *View          // resources of this world
 }
 
 // String get a string representation of our World
@@ -53,7 +55,8 @@ func (world World) String() string {
 
 	result += world.systems.String() + "], "
 
-	result += " subscriptions: [" + world.subscriptions.String() + "]"
+	result += " subscriptions: [" + world.subscriptions.String() + "],"
+	result += " resources: [" + world.resources.String() + "],"
 
 	result += "}"
 
@@ -99,11 +102,33 @@ func (world *World) Signal(signal interface{}) {
 	world.subscriptions.Signal(signal)
 }
 
-// Clear removes all System, Listener, Subscriptions and Entity from the World
+// Clear removes all System, Listener, Subscriptions, Entity and Resources from the World
 func (world *World) Clear() {
 	world.systems.Clear()
 	world.subscriptions.Clear()
 	world.View.Clear()
+	world.resources.Clear()
+}
+
+// AddResource create a new resource and add it to the world
+// resources a global entities with a single instance
+// that are no return by the Iterator for example things like a
+// game score
+func (world *World) AddResource(components ...Component) EntityID {
+	return world.resources.AddEntity(components...)
+}
+
+// GetResource gets a resource from the world
+func (world World) GetResource(id EntityID) *Entity {
+	return world.resources.Get(id)
+}
+
+// FindResource find a resource in the world that match the given ComponentType
+func (world World) FindResource(components ...ComponentType) EntityID {
+	if id, err := world.resources.First(components...); err == nil {
+		return id
+	}
+	return 0
 }
 
 // Default creates a default World with a initial capacity
@@ -119,16 +144,18 @@ func Default() *World {
 		DefaultSystemsInitialCapacity,
 		DefaultListenersInitialCapacity,
 		DefaultSignalsInitialCapacity,
+		DefaultResourcesInitialCapacity,
 	)
 }
 
 // New creates World with a giving initial capacity of entities, systems, listeners and signals
 //
 // Since those elements are sparse.Slice the will grow dynamically
-func New(entities, systems, listeners, signals int) *World {
+func New(entities, systems, listeners, signals, resources int) *World {
 	return &World{
 		View:          NewView(entities),
 		systems:       NewSystems(systems),
 		subscriptions: NewSubscriptions(listeners, signals),
+		resources:     NewView(resources),
 	}
 }

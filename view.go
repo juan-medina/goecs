@@ -87,6 +87,20 @@ func (ei *Iterator) Value() *Entity {
 	return ei.data.items[ei.current]
 }
 
+// First return the first EntityID that match the given ComponentType
+func (v *View) First(components ...ComponentType) (EntityID, error) {
+	for _, si := range v.items {
+		if si != nil {
+			if !si.IsEmpty() {
+				if si.Contains(components...) {
+					return si.ID(), nil
+				}
+			}
+		}
+	}
+	return 0, ErrEntityNotFound
+}
+
 // AddEntity a Entity instance to a View given it components
 func (v *View) AddEntity(data ...Component) EntityID {
 	v.lastID++
