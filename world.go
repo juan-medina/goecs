@@ -131,6 +131,11 @@ func (world World) FindResource(components ...ComponentType) EntityID {
 	return 0
 }
 
+// RemoveResource removes a resource from the world
+func (world World) RemoveResource(id EntityID) error {
+	return world.resources.Remove(id)
+}
+
 // Default creates a default World with a initial capacity
 //  const (
 //  	DefaultSignalsInitialCapacity   = 20   // Default Signals initial capacity

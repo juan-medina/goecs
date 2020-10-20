@@ -539,6 +539,18 @@ func Test_Resources(t *testing.T) {
 	if id != 0 {
 		t.Fatalf("error on get resource got id %v, want id %v", id, 0)
 	}
+
+	err := world.RemoveResource(idScore)
+
+	if err != nil {
+		t.Fatalf("error on remove resource got  %v, want nil", err)
+	}
+
+	id = world.FindResource(scoreType)
+
+	if id != 0 {
+		t.Fatalf("error get remove resource got %v, want 0", id)
+	}
 }
 
 type score struct {
